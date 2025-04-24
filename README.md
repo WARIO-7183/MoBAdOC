@@ -1,4 +1,4 @@
-# ChatBot Application
+# Medical Assistant Chatbot
 
 A modern Flutter-based chat application with real-time messaging capabilities.
 
@@ -7,22 +7,31 @@ A modern Flutter-based chat application with real-time messaging capabilities.
 
 ## Features
 
-- Real-time chat functionality
-- Clean and modern user interface
-- State management using providers
-- Environment configuration support
-- Cross-platform support (Android, iOS, Web)
+### Chat Interface
+- Clean, modern WhatsApp-style chat interface
+- Real-time message updates
+- Support for text messages and medical images
+- Voice input support for easy communication
+- Like/Dislike feedback system for responses
+- Copy message functionality
+- New chat session creation
 
-## Project Structure
+### Image Analysis
+- Upload medical reports and images through:
+  - Gallery selection
+  - Camera capture
+  - File attachment (supports PDF, JPG, JPEG, PNG)
+- Image preview in chat
+- Full-screen image viewer with zoom capabilities
+- AI-powered medical report analysis
 
-```
-lib/
-├── config/         # Configuration files
-├── models/         # Data models
-├── providers/      # State management
-├── screens/        # UI screens
-└── services/       # Business logic
-```
+### AI Assistant Capabilities
+- Natural, conversational interactions
+- Structured medical consultations
+- Symptom analysis and basic diagnosis suggestions
+- Medicine recommendations (with both brand and generic names)
+- Clear disclaimers about AI limitations
+- Professional and empathetic communication
 
 ## Getting Started
 
@@ -36,59 +45,85 @@ lib/
 
 1. Clone the repository:
 ```bash
-git clone [your-repository-url]
-cd chatbot_app
+git clone [repository-url]
 ```
 
-2. Install dependencies:
+2. Navigate to the project directory:
+```bash
+cd medical-assistant-chatbot
+```
+
+3. Install dependencies:
 ```bash
 flutter pub get
 ```
 
-3. Set up environment variables:
-   - Copy `.env.example` to `.env`
-   - Update the environment variables as needed
+4. Create a `.env` file in the root directory and add your Groq API key:
+```
+GROQ_API_KEY=your_api_key_here
+```
 
-4. Run the application:
+5. Run the application:
 ```bash
 flutter run
 ```
 
-## Configuration
+## Usage
 
-The application uses environment variables for configuration. Create a `.env` file in the root directory with the following variables:
+1. **Starting a Conversation**
+   - Launch the app
+   - The AI will ask for your name, age, and gender
+   - Describe your medical concerns
 
-```
-API_BASE_URL=your_api_url
-API_KEY=your_api_key
-```
+2. **Uploading Medical Reports**
+   - Click the attachment icon (📎) to upload files
+   - Use the camera icon (📷) to take photos
+   - Supported formats: PDF, JPG, JPEG, PNG
+   - View uploaded images in full screen by tapping them
 
-## Development
+3. **Voice Input**
+   - Press and hold the microphone icon to record
+   - Release to send the voice input
+   - Your speech will be converted to text
+
+4. **Managing Conversations**
+   - Start a new consultation using the '+' button
+   - Like or dislike AI responses
+   - Copy messages using the copy icon
+
+## Security and Privacy
+
+- All medical data is processed securely
+- Images are converted to base64 format for secure transmission
+- No medical data is stored permanently
+- The app is not a replacement for professional medical care
+
+## Technical Details
+
+### Dependencies
+- `provider`: State management
+- `speech_to_text`: Voice input processing
+- `image_picker`: Image capture and selection
+- `file_picker`: File selection and handling
+- `http`: API communication
+- `flutter_dotenv`: Environment configuration
 
 ### Architecture
+- Provider pattern for state management
+- Clean separation of UI and business logic
+- Modular component design
+- Efficient image handling and processing
 
-The application follows a clean architecture pattern with:
-- Models: Data structures and business objects
-- Services: Business logic and API interactions
-- Providers: State management
-- Screens: UI components
+## Disclaimer
 
-### State Management
-
-The application uses the Provider package for state management, making it easy to handle application state and data flow.
+This application is designed to provide basic medical information and guidance. It is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of qualified healthcare providers with questions regarding medical conditions.
 
 ## Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Contributions are welcome! Please feel free to submit pull requests.
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Support
 
-For support, email [your-email] or open an issue in the repository.
