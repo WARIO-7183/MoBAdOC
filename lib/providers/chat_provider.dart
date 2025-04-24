@@ -1,4 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../models/message.dart';
 import '../services/chat_service.dart';
 
@@ -92,5 +96,82 @@ Remember: Be conversational and human-like. Follow the exact sequence: 1) ask na
       isUser: false,
     ));
     notifyListeners();
+  }
+
+  Future<void> sendImageMessage(File imageFile) async {
+    try {
+      // Add user message with image
+      final userMessage = Message(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        text: "I've attached a medical report/image",
+        timestamp: DateTime.now(),
+        isUser: true,
+        imageUrl: imageFile.path,
+      );
+      _messages.add(userMessage);
+      notifyListeners();
+
+      // Convert image to base64
+      List<int> imageBytes = await imageFile.readAsBytes();
+      String base64Image = base64Encode(imageBytes);
+
+      // Get bot response from OpenAI with system prompt and image
+      final botMessage = await _chatService.sendMessageWithImage(
+        "Please analyze this medical report/image and provide insights.",
+        base64Image,
+        _systemPrompt,
+        _messages,
+      );
+      _messages.add(botMessage);
+      notifyListeners();
+    } catch (e) {
+      print('Error in sendImageMessage: $e'); // Debug log
+      final errorMessage = Message(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        text: 'Error: Failed to process image. Please try again.',
+        timestamp: DateTime.now(),
+        isUser: false,
+      );
+      _messages.add(errorMessage);
+      notifyListeners();
+    }
+  }
+
+  Future<void> sendImageMessageBytes(Uint8List bytes, String fileName) async {
+    try {
+      // Convert image bytes to base64
+      String base64Image = base64Encode(bytes);
+      
+      // Add user message with image
+      final userMessage = Message(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        text: "I've attached a medical report/image",
+        timestamp: DateTime.now(),
+        isUser: true,
+        imageUrl: 'data:image/jpeg;base64,$base64Image', // Store the full base64 data
+      );
+      _messages.add(userMessage);
+      notifyListeners();
+
+      // Get bot response from OpenAI with system prompt and image
+      final botMessage = await _chatService.sendMessageWithImage(
+        "Please analyze this medical report/image and provide insights.",
+        base64Image,
+        _systemPrompt,
+        _messages,
+      );
+      _messages.add(botMessage);
+      notifyListeners();
+    } catch (e) {
+      print('Error in sendImageMessageBytes: $e'); // Debug log
+      final errorMessage = Message(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        text: 'Error: Failed to process image. Please try again.',
+        timestamp: DateTime.now(),
+        isUser: false,
+      );
+      _messages.add(errorMessage);
+      notifyListeners();
+    }
   }
 } 

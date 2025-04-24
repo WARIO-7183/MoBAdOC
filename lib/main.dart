@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/chat_screen.dart';
+import 'screens/login_screen.dart';
 import 'providers/chat_provider.dart';
 import 'config/api_config.dart';
 
@@ -40,7 +41,7 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.blue,
           useMaterial3: true,
         ),
-        home: const ChatScreen(),
+        home: const LoginScreen(),
       ),
     );
   }

@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 import '../models/message.dart';
 import '../providers/chat_provider.dart';
 import 'package:flutter/rendering.dart';
+import 'dart:convert';
 
 // Add TextStyle constants for consistent font usage
 const kTitleStyle = TextStyle(
@@ -228,6 +232,119 @@ class _MessageBubbleState extends State<_MessageBubble> {
     });
   }
 
+  Future<Uint8List> _loadImageBytes() async {
+    try {
+      if (widget.message.imageUrl == null) {
+        throw Exception('No image URL provided');
+      }
+
+      // Handle base64 encoded images
+      if (widget.message.imageUrl!.startsWith('data:image')) {
+        final base64Str = widget.message.imageUrl!.split(',')[1];
+        return base64Decode(base64Str);
+      }
+
+      // Handle file paths (for backward compatibility)
+      final file = File(widget.message.imageUrl!);
+      if (await file.exists()) {
+        return await file.readAsBytes();
+      } else {
+        throw Exception('File not found: ${widget.message.imageUrl}');
+      }
+    } catch (e) {
+      print('Error loading image: $e');
+      rethrow;
+    }
+  }
+
+  Widget _buildImage() {
+    if (widget.message.imageUrl == null) return const SizedBox.shrink();
+
+    return FutureBuilder<Uint8List>(
+      future: _loadImageBytes(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            width: 200,
+            height: 200,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+        
+        if (snapshot.hasError || !snapshot.hasData) {
+          return Container(
+            width: 200,
+            height: 200,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.error_outline, size: 40, color: Colors.grey),
+                  SizedBox(height: 8),
+                  Text(
+                    'Failed to load image',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return GestureDetector(
+          onTap: () {
+            // Show full-screen image preview
+            showDialog(
+              context: context,
+              builder: (context) => Dialog(
+                child: Stack(
+                  children: [
+                    InteractiveViewer(
+                      child: Image.memory(
+                        snapshot.data!,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+          child: Hero(
+            tag: widget.message.id,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.memory(
+                snapshot.data!,
+                width: 200,
+                height: 200,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -242,8 +359,8 @@ class _MessageBubbleState extends State<_MessageBubble> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: widget.message.isUser 
-                  ? const Color(0xFFE7FFDB) // Light green for user messages
-                  : Colors.white.withOpacity(0.95), // More opaque white for assistant messages
+                  ? const Color(0xFFE7FFDB)
+                  : Colors.white.withOpacity(0.95),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
@@ -256,6 +373,10 @@ class _MessageBubbleState extends State<_MessageBubble> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (widget.message.imageUrl != null) ...[
+                  _buildImage(),
+                  const SizedBox(height: 8),
+                ],
                 Text(
                   widget.message.text,
                   style: kMessageStyle,
@@ -320,6 +441,7 @@ class _MessageInput extends StatefulWidget {
 
 class _MessageInputState extends State<_MessageInput> {
   final SpeechToText _speechToText = SpeechToText();
+  final ImagePicker _imagePicker = ImagePicker();
   bool _isListening = false;
 
   @override
@@ -356,6 +478,53 @@ class _MessageInputState extends State<_MessageInput> {
     }
   }
 
+  Future<void> _pickFile() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+        withData: true, // This ensures we get the file data regardless of platform
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        if (file.bytes != null) {
+          await context.read<ChatProvider>().sendImageMessageBytes(
+            file.bytes!,
+            file.name,
+          );
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking file: $e')),
+      );
+    }
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+      
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        await context.read<ChatProvider>().sendImageMessageBytes(
+          bytes,
+          image.name,
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking image: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -363,6 +532,11 @@ class _MessageInputState extends State<_MessageInput> {
       color: const Color(0xFFF5F0E8),
       child: Row(
         children: [
+          // Attachment button
+          IconButton(
+            icon: const Icon(Icons.attach_file, color: Color(0xFF00A884)),
+            onPressed: _pickFile,
+          ),
           // Mic button
           GestureDetector(
             onTapDown: (_) => _startListening(),
@@ -373,14 +547,14 @@ class _MessageInputState extends State<_MessageInput> {
                 shape: BoxShape.circle,
                 color: _isListening 
                     ? Colors.red 
-                    : const Color(0xFF00A884), // WhatsApp's signature green color
+                    : const Color(0xFF00A884),
               ),
               child: IconButton(
                 icon: Icon(
                   _isListening ? Icons.mic : Icons.mic_none,
                   color: Colors.white,
                 ),
-                onPressed: null, // Disabled because we're using GestureDetector
+                onPressed: null,
               ),
             ),
           ),
@@ -397,9 +571,7 @@ class _MessageInputState extends State<_MessageInput> {
                   // Camera icon
                   IconButton(
                     icon: const Icon(Icons.camera_alt, color: Colors.grey),
-                    onPressed: () {
-                      // Implement camera functionality
-                    },
+                    onPressed: _pickImage,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
