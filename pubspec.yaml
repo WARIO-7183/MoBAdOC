@@ -15,6 +15,7 @@ dependencies:
   shared_preferences: ^2.2.0
   openai_api: ^0.3.7
   flutter_dotenv: ^5.1.0
+  speech_to_text: ^6.6.0
 
 dev_dependencies:
   flutter_test:
@@ -25,3 +26,13 @@ flutter:
   uses-material-design: true
   assets:
     - .env
+    - assets/images/chat_bg.png
+  
+  fonts:
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Regular.ttf
+        - asset: assets/fonts/Nunito-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Nunito-Light.ttf
+          weight: 300

@@ -1,9 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import '../models/message.dart';
 import '../providers/chat_provider.dart';
 import 'package:flutter/rendering.dart';
+
+// Add TextStyle constants for consistent font usage
+const kTitleStyle = TextStyle(
+  fontFamily: 'Nunito',
+  fontSize: 20,
+  fontWeight: FontWeight.bold,
+  color: Colors.black,
+);
+
+const kMessageStyle = TextStyle(
+  fontFamily: 'Nunito',
+  fontSize: 16,
+  color: Colors.black87,
+);
+
+const kHintStyle = TextStyle(
+  fontFamily: 'Nunito',
+  fontSize: 16,
+  color: Colors.grey,
+);
+
+const kHeaderStyle = TextStyle(
+  fontFamily: 'Nunito',
+  fontSize: 24,
+  fontWeight: FontWeight.bold,
+);
+
+const kSubtitleStyle = TextStyle(
+  fontFamily: 'Nunito',
+  fontSize: 16,
+  color: Colors.black54,
+);
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -67,18 +100,15 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F0E8),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F0E8),
-        elevation: 0,
+        backgroundColor: const Color(0xFF00A884),
+        elevation: 1,
         title: const Row(
           children: [
             Icon(Icons.medical_services_outlined, color: Colors.red),
             SizedBox(width: 8),
             Text(
               'Medical Assistant',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-              ),
+              style: kTitleStyle,
             ),
           ],
         ),
@@ -89,62 +119,65 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            child: Column(
-              children: [
-                Icon(Icons.medical_services, size: 40, color: Colors.red),
-                SizedBox(height: 10),
-                Text(
-                  'AI Medical Assistant',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/chat_bg.png'),
+            repeat: ImageRepeat.repeat,
+            opacity: 0.3, // Reduced opacity for better readability
+          ),
+        ),
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Column(
+                children: [
+                  Icon(Icons.medical_services, size: 40, color: Colors.red),
+                  SizedBox(height: 10),
+                  Text(
+                    'AI Medical Assistant',
+                    style: kHeaderStyle,
                   ),
-                ),
-                SizedBox(height: 10),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 40),
-                  child: Text(
-                    "I'm here to help you with your health concerns. Please note that I'm an AI assistant and not a replacement for professional medical care.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black54,
+                  SizedBox(height: 10),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 40),
+                    child: Text(
+                      "I'm here to help you with your health concerns. Please note that I'm an AI assistant and not a replacement for professional medical care.",
+                      textAlign: TextAlign.center,
+                      style: kSubtitleStyle,
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: Consumer<ChatProvider>(
-              builder: (context, chatProvider, child) {
-                return ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: chatProvider.messages.length,
-                  itemBuilder: (context, index) {
-                    final message = chatProvider.messages[index];
-                    return _MessageBubble(message: message);
-                  },
-                );
+            Expanded(
+              child: Consumer<ChatProvider>(
+                builder: (context, chatProvider, child) {
+                  return ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    itemCount: chatProvider.messages.length,
+                    itemBuilder: (context, index) {
+                      final message = chatProvider.messages[index];
+                      return _MessageBubble(message: message);
+                    },
+                  );
+                },
+              ),
+            ),
+            _MessageInput(
+              messageController: _messageController,
+              onSend: () {
+                if (_messageController.text.trim().isNotEmpty) {
+                  context.read<ChatProvider>().sendMessage(_messageController.text);
+                  _messageController.clear();
+                  _scrollToBottom();
+                }
               },
             ),
-          ),
-          _MessageInput(
-            messageController: _messageController,
-            onSend: () {
-              if (_messageController.text.trim().isNotEmpty) {
-                context.read<ChatProvider>().sendMessage(_messageController.text);
-                _messageController.clear();
-                _scrollToBottom();
-              }
-            },
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -208,11 +241,13 @@ class _MessageBubbleState extends State<_MessageBubble> {
             ),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: widget.message.isUser ? Colors.white : Colors.white,
+              color: widget.message.isUser 
+                  ? const Color(0xFFE7FFDB) // Light green for user messages
+                  : Colors.white.withOpacity(0.95), // More opaque white for assistant messages
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withOpacity(0.08),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -223,10 +258,7 @@ class _MessageBubbleState extends State<_MessageBubble> {
               children: [
                 Text(
                   widget.message.text,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 16,
-                  ),
+                  style: kMessageStyle,
                 ),
                 if (!widget.message.isUser) ...[
                   const SizedBox(height: 8),
@@ -273,7 +305,7 @@ class _MessageBubbleState extends State<_MessageBubble> {
   }
 }
 
-class _MessageInput extends StatelessWidget {
+class _MessageInput extends StatefulWidget {
   final TextEditingController messageController;
   final VoidCallback onSend;
 
@@ -283,70 +315,113 @@ class _MessageInput extends StatelessWidget {
   });
 
   @override
+  State<_MessageInput> createState() => _MessageInputState();
+}
+
+class _MessageInputState extends State<_MessageInput> {
+  final SpeechToText _speechToText = SpeechToText();
+  bool _isListening = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initSpeech();
+  }
+
+  void _initSpeech() async {
+    await _speechToText.initialize();
+    setState(() {});
+  }
+
+  void _startListening() async {
+    if (!_isListening) {
+      var available = await _speechToText.initialize();
+      if (available) {
+        setState(() => _isListening = true);
+        _speechToText.listen(
+          onResult: (result) {
+            setState(() {
+              widget.messageController.text = result.recognizedWords;
+            });
+          },
+        );
+      }
+    }
+  }
+
+  void _stopListening() {
+    if (_isListening) {
+      _speechToText.stop();
+      setState(() => _isListening = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F0E8),
-        border: Border(
-          top: BorderSide(
-            color: Colors.grey.withOpacity(0.2),
-            width: 1,
-          ),
-        ),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      color: const Color(0xFFF5F0E8),
       child: Row(
         children: [
+          // Mic button
+          GestureDetector(
+            onTapDown: (_) => _startListening(),
+            onTapUp: (_) => _stopListening(),
+            onTapCancel: () => _stopListening(),
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _isListening 
+                    ? Colors.red 
+                    : const Color(0xFF00A884), // WhatsApp's signature green color
+              ),
+              child: IconButton(
+                icon: Icon(
+                  _isListening ? Icons.mic : Icons.mic_none,
+                  color: Colors.white,
+                ),
+                onPressed: null, // Disabled because we're using GestureDetector
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           Expanded(
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: Colors.grey.withOpacity(0.3),
-                ),
               ),
               child: Row(
                 children: [
+                  const SizedBox(width: 8),
+                  // Camera icon
+                  IconButton(
+                    icon: const Icon(Icons.camera_alt, color: Colors.grey),
+                    onPressed: () {
+                      // Implement camera functionality
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
                   Expanded(
                     child: TextField(
-                      controller: messageController,
+                      controller: widget.messageController,
+                      style: kMessageStyle,
                       decoration: const InputDecoration(
-                        hintText: 'Ask me anything...',
+                        hintText: 'Message',
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                        hintStyle: TextStyle(color: Colors.grey),
+                        hintStyle: kHintStyle,
                       ),
-                      onSubmitted: (_) => onSend(),
+                      onSubmitted: (_) => widget.onSend(),
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.send, color: Colors.grey),
-                    onPressed: onSend,
+                    icon: const Icon(Icons.send, color: Color(0xFF00A884)),
+                    onPressed: widget.onSend,
                   ),
                 ],
               ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.black,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.refresh, color: Colors.white, size: 20),
-              onPressed: () {
-                // Clear all messages
-                context.read<ChatProvider>().clearMessages();
-                // Show confirmation snackbar
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Chat has been reset'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              },
             ),
           ),
         ],
