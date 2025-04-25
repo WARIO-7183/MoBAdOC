@@ -1,4 +1,15 @@
 import requests
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Get API key from environment variables
+fast2sms_api_key = os.getenv('FAST2SMS_API_KEY')
+
+if not fast2sms_api_key:
+    raise ValueError("FAST2SMS_API_KEY not found in environment variables")
 
 url = "https://www.fast2sms.com/dev/custom"
 
@@ -16,7 +27,7 @@ payload = {
 }
 
 headers = {
-    'authorization': "LoyxFDqUBuRn2IVhfAN4HWpPgkibO3KcrlsdJeQTGm790z8CtvmlYVW6voSe7bpKuLJ31RZdhIfH5MyF",
+    'authorization': fast2sms_api_key,
     'Content-Type': "application/json"
 }
 

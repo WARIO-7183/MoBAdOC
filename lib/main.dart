@@ -10,11 +10,7 @@ import 'config/firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Firebase with options
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
+  // Load environment variables first
   try {
     await dotenv.load(fileName: ".env");
   } catch (e) {
@@ -23,15 +19,40 @@ void main() async {
     rethrow;
   }
   
+  // Initialize Firebase with options after environment variables are loaded
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
   final String? groqApiKey = dotenv.env['GROQ_API_KEY'];
   
   if (groqApiKey == null || groqApiKey.isEmpty) {
     throw Exception('GROQ_API_KEY not found in .env file');
   }
 
+  // Validate Firebase environment variables
+  _validateFirebaseEnvVars();
+
   ApiConfig.setApiKey(groqApiKey);
   
   runApp(const MyApp());
+}
+
+// Function to validate Firebase environment variables
+void _validateFirebaseEnvVars() {
+  final requiredEnvVars = [
+    'FIREBASE_API_KEY',
+    'FIREBASE_APP_ID',
+    'FIREBASE_MESSAGING_SENDER_ID',
+    'FIREBASE_PROJECT_ID',
+    'FIREBASE_STORAGE_BUCKET',
+  ];
+  
+  for (final envVar in requiredEnvVars) {
+    if (dotenv.env[envVar] == null || dotenv.env[envVar]!.isEmpty) {
+      throw Exception('$envVar not found in .env file');
+    }
+  }
 }
 
 class MyApp extends StatelessWidget {
