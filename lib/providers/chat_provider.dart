@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../models/message.dart';
 import '../services/chat_service.dart';
 

@@ -15,9 +15,13 @@ dependencies:
   shared_preferences: ^2.2.0
   openai_api: ^0.3.7
   flutter_dotenv: ^5.1.0
-  speech_to_text: ^6.6.0
+  flutter_tts: ^3.8.5
   image_picker: ^1.0.7
-  file_picker: ^6.1.1
+  permission_handler: ^11.3.0
+  # Firebase packages
+  firebase_core: ^2.24.2
+  firebase_auth: ^4.15.3
+  cloud_firestore: ^4.13.6
 
 dev_dependencies:
   flutter_test:

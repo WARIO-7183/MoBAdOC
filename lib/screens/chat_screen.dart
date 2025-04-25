@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:speech_to_text/speech_to_text.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 import '../models/message.dart';
 import '../providers/chat_provider.dart';
-import 'package:flutter/rendering.dart';
 import 'dart:convert';
 
 // Add TextStyle constants for consistent font usage
@@ -440,60 +439,60 @@ class _MessageInput extends StatefulWidget {
 }
 
 class _MessageInputState extends State<_MessageInput> {
-  final SpeechToText _speechToText = SpeechToText();
+  final FlutterTts _flutterTts = FlutterTts();
   final ImagePicker _imagePicker = ImagePicker();
-  bool _isListening = false;
+  bool _isSpeaking = false;
 
   @override
   void initState() {
     super.initState();
-    _initSpeech();
+    _initTts();
+    _requestPermissions();
   }
 
-  void _initSpeech() async {
-    await _speechToText.initialize();
-    setState(() {});
+  Future<void> _requestPermissions() async {
+    await Permission.camera.request();
+    await Permission.microphone.request();
+    await Permission.storage.request();
   }
 
-  void _startListening() async {
-    if (!_isListening) {
-      var available = await _speechToText.initialize();
-      if (available) {
-        setState(() => _isListening = true);
-        _speechToText.listen(
-          onResult: (result) {
-            setState(() {
-              widget.messageController.text = result.recognizedWords;
-            });
-          },
-        );
-      }
+  void _initTts() async {
+    await _flutterTts.setLanguage("en-US");
+    await _flutterTts.setSpeechRate(0.5);
+    await _flutterTts.setVolume(1.0);
+    await _flutterTts.setPitch(1.0);
+    
+    _flutterTts.setCompletionHandler(() {
+      setState(() {
+        _isSpeaking = false;
+      });
+    });
+  }
+
+  void _speak(String text) async {
+    if (text.isNotEmpty) {
+      setState(() => _isSpeaking = true);
+      await _flutterTts.speak(text);
     }
   }
 
-  void _stopListening() {
-    if (_isListening) {
-      _speechToText.stop();
-      setState(() => _isListening = false);
+  void _stopSpeaking() {
+    if (_isSpeaking) {
+      _flutterTts.stop();
+      setState(() => _isSpeaking = false);
     }
   }
 
   Future<void> _pickFile() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-        withData: true, // This ensures we get the file data regardless of platform
-      );
-
-      if (result != null && result.files.isNotEmpty) {
-        final file = result.files.first;
-        if (file.bytes != null) {
-          await context.read<ChatProvider>().sendImageMessageBytes(
-            file.bytes!,
-            file.name,
-          );
-        }
+      final XFile? pickedFile = await _imagePicker.pickMedia();
+      
+      if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
+        await context.read<ChatProvider>().sendImageMessageBytes(
+          bytes,
+          pickedFile.name,
+        );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -503,6 +502,69 @@ class _MessageInputState extends State<_MessageInput> {
   }
 
   Future<void> _pickImage() async {
+    try {
+      // Check camera permission
+      final status = await Permission.camera.status;
+      if (!status.isGranted) {
+        final result = await Permission.camera.request();
+        if (!result.isGranted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Camera permission is required to take photos'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+          return;
+        }
+      }
+
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
+      );
+
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+        preferredCameraDevice: CameraDevice.rear,
+      );
+
+      // Hide loading indicator
+      Navigator.pop(context);
+      
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        await context.read<ChatProvider>().sendImageMessageBytes(
+          bytes,
+          image.name,
+        );
+      }
+    } catch (e) {
+      // Hide loading indicator if still showing
+      if (context.mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error accessing camera: $e'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _pickFromGallery() async {
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
@@ -520,7 +582,10 @@ class _MessageInputState extends State<_MessageInput> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking image: $e')),
+        SnackBar(
+          content: Text('Error picking image from gallery: $e'),
+          duration: const Duration(seconds: 3),
+        ),
       );
     }
   }
@@ -532,67 +597,86 @@ class _MessageInputState extends State<_MessageInput> {
       color: const Color(0xFFF5F0E8),
       child: Row(
         children: [
-          // Attachment button
           IconButton(
-            icon: const Icon(Icons.attach_file, color: Color(0xFF00A884)),
+            icon: const Icon(Icons.attach_file),
             onPressed: _pickFile,
+            color: Colors.grey[600],
           ),
-          // Mic button
-          GestureDetector(
-            onTapDown: (_) => _startListening(),
-            onTapUp: (_) => _stopListening(),
-            onTapCancel: () => _stopListening(),
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _isListening 
-                    ? Colors.red 
-                    : const Color(0xFF00A884),
-              ),
-              child: IconButton(
-                icon: Icon(
-                  _isListening ? Icons.mic : Icons.mic_none,
-                  color: Colors.white,
+          IconButton(
+            icon: const Icon(Icons.photo_library),
+            onPressed: _pickFromGallery,
+            color: Colors.grey[600],
+          ),
+          IconButton(
+            icon: const Icon(Icons.camera_alt),
+            onPressed: _pickImage,
+            color: Colors.grey[600],
+          ),
+          IconButton(
+            icon: Icon(_isSpeaking ? Icons.volume_off : Icons.volume_up),
+            onPressed: () {
+              if (_isSpeaking) {
+                _stopSpeaking();
+              } else {
+                // Get the latest AI message and speak it
+                final messages = context.read<ChatProvider>().messages;
+                final aiMessages = messages.where((m) => !m.isUser).toList();
+                if (aiMessages.isNotEmpty) {
+                  _speak(aiMessages.last.text);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('No AI messages to speak'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              }
+            },
+            color: Colors.grey[600],
+          ),
+          Expanded(
+            child: TextField(
+              controller: widget.messageController,
+              decoration: InputDecoration(
+                hintText: 'Type a message...',
+                hintStyle: kHintStyle,
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.all(12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(25),
+                  borderSide: BorderSide.none,
                 ),
-                onPressed: null,
               ),
+              keyboardType: TextInputType.multiline,
+              maxLines: null,
+              textCapitalization: TextCapitalization.sentences,
             ),
           ),
           const SizedBox(width: 8),
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Row(
-                children: [
-                  const SizedBox(width: 8),
-                  // Camera icon
-                  IconButton(
-                    icon: const Icon(Icons.camera_alt, color: Colors.grey),
-                    onPressed: _pickImage,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  Expanded(
-                    child: TextField(
-                      controller: widget.messageController,
-                      style: kMessageStyle,
-                      decoration: const InputDecoration(
-                        hintText: 'Message',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                        hintStyle: kHintStyle,
-                      ),
-                      onSubmitted: (_) => widget.onSend(),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF00A884),
+            ),
+            child: IconButton(
+              onPressed: () {
+                if (widget.messageController.text.trim().isEmpty) {
+                  // Don't send empty messages
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please type a message first'),
+                      duration: Duration(seconds: 2),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.send, color: Color(0xFF00A884)),
-                    onPressed: widget.onSend,
-                  ),
-                ],
+                  );
+                } else {
+                  widget.onSend();
+                }
+              },
+              icon: const Icon(
+                Icons.send,
+                color: Colors.white,
               ),
             ),
           ),

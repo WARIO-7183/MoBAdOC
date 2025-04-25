@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "686367810156",
+    "project_id": "aidoc-9337e",
+    "storage_bucket": "aidoc-9337e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:686367810156:android:acc2e1e92e8a21bf0fee49",
+        "android_client_info": {
+          "package_name": "com.example.chatbot_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAp7onUs0BqUQISJ29665sWfcMSwKH00wk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
