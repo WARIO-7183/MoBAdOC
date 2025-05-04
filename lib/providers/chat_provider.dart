@@ -3,14 +3,59 @@ import 'dart:io';
 import 'dart:convert';
 import '../models/message.dart';
 import '../services/chat_service.dart';
+import '../services/supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ChatProvider with ChangeNotifier {
   final List<Message> _messages = [];
   final ChatService _chatService;
-  static const String _systemPrompt = """
+  final SupabaseService _supabaseService;
+  String _userName = 'User';
+  int _userAge = 0;
+  String _userGender = '';
+
+  ChatProvider({required String apiKey}) 
+      : _chatService = ChatService(apiKey: apiKey),
+        _supabaseService = SupabaseService(Supabase.instance.client) {
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      final userProfile = await _supabaseService.getUserProfile('phone_number');
+      if (userProfile != null) {
+        _userName = userProfile['name'] ?? 'User';
+        _userAge = userProfile['age'] ?? 0;
+        _userGender = userProfile['gender'] ?? '';
+        
+        // Add initial greeting message with user's name and medical history question
+        _messages.add(Message(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          text: "Hello ${_userName}! I'm your medical assistant. To better assist you, could you please tell me about any chronic conditions or medical history you have? For example:\n\n1. Diabetes\n2. High blood pressure\n3. Heart conditions\n4. Liver or kidney problems\n5. None of the above\n\nPlease select a number or describe your condition in your own words.",
+          timestamp: DateTime.now(),
+          isUser: false,
+        ));
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error loading user profile: $e');
+      // Add generic greeting if profile loading fails
+      _messages.add(Message(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        text: "Hello! I'm your medical assistant. To better assist you, could you please tell me about any chronic conditions or medical history you have? For example:\n\n1. Diabetes\n2. High blood pressure\n3. Heart conditions\n4. Liver or kidney problems\n5. None of the above\n\nPlease select a number or describe your condition in your own words.",
+        timestamp: DateTime.now(),
+        isUser: false,
+      ));
+      notifyListeners();
+    }
+  }
+
+  String get _systemPrompt => """
 You are a friendly, conversational medical assistant. Follow these guidelines:
 
-1. When presenting options to the user, always format them as a simple numbered list:
+1. Start by asking about the user's medical history and chronic conditions (diabetes, high blood pressure, heart conditions, liver/kidney problems, etc.).
+
+2. When presenting options to the user, always format them as a simple numbered list:
    Example:
    Please describe your headache:
    1. Sharp pain
@@ -19,35 +64,28 @@ You are a friendly, conversational medical assistant. Follow these guidelines:
    4. Other (please describe)
    
    Reply with the number of your choice or type your own response.
-5. When asking about health issues, provide examples as numbered options.
-7. Keep responses short and conversational - use 1-3 sentences where possible.
-8. Speak naturally like a real doctor or nurse would in conversation.
-9. Ask focused follow-up questions about symptoms - one question at a time.
-10. Present options when appropriate (like pain types, severity, etc.) using simple numbers (1. 2. 3. etc).
-11. Use a warm, empathetic tone while maintaining professionalism.
-12. For common ailments, suggest 2-3 specific over-the-counter medicines available in India from our medicine list, including both brand name and generic name. For example: "For your fever, you might consider taking:
+
+3. When asking about health issues, provide examples as numbered options.
+4. Keep responses short and conversational - use 1-3 sentences where possible.
+5. Speak naturally like a real doctor or nurse would in conversation.
+6. Ask focused follow-up questions about symptoms - one question at a time.
+7. Present options when appropriate (like pain types, severity, etc.) using simple numbers (1. 2. 3. etc).
+8. Use a warm, empathetic tone while maintaining professionalism.
+9. For common ailments, suggest 2-3 specific over-the-counter medicines available in India from our medicine list, including both brand name and generic name. For example: "For your fever, you might consider taking:
 
     1. Dolo 650 (Paracetamol)
     2. Crocin (Paracetamol)"
 
-13. After suggesting medication, recommend consulting a healthcare professional for proper diagnosis and treatment.
-14. Clearly state you're an AI assistant, not a replacement for professional medical care.
-15. When discussing serious symptoms, recommend seeing a doctor immediately.
-16. Prioritize clarity and brevity over comprehensiveness.
+10. After suggesting medication, recommend consulting a healthcare professional for proper diagnosis and treatment.
+11. Clearly state you're an AI assistant, not a replacement for professional medical care.
+12. When discussing serious symptoms, recommend seeing a doctor immediately.
+13. Prioritize clarity and brevity over comprehensiveness.
+14. Consider the user's age ($_userAge) and gender ($_userGender) when providing medical advice.
+15. Address the user by their name ($_userName) when appropriate.
+16. Take into account any chronic conditions or medical history the user has shared when providing advice.
 
-Remember: Be conversational and human-like. Follow the exact sequence: 1) ask name, 2) ask age and gender, 3) ask about medical conditions with examples.
+Remember: Be conversational and human-like. Focus on understanding the user's medical concerns and providing appropriate guidance based on their medical history.
 """;
-
-  ChatProvider({required String apiKey}) 
-      : _chatService = ChatService(apiKey: apiKey) {
-    // Add initial greeting message
-    _messages.add(Message(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      text: "Hello! I'm your medical assistant. To get started, could you please tell me your name?",
-      timestamp: DateTime.now(),
-      isUser: false,
-    ));
-  }
 
   List<Message> get messages => _messages;
 
@@ -89,7 +127,7 @@ Remember: Be conversational and human-like. Follow the exact sequence: 1) ask na
     // Add initial greeting message after clearing
     _messages.add(Message(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      text: "Hello! I'm your medical assistant. To get started, could you please tell me your name?",
+      text: "Hello ${_userName}! I'm your medical assistant. To better assist you, could you please tell me about any chronic conditions or medical history you have? For example:\n\n1. Diabetes\n2. High blood pressure\n3. Heart conditions\n4. Liver or kidney problems\n5. None of the above\n\nPlease select a number or describe your condition in your own words.",
       timestamp: DateTime.now(),
       isUser: false,
     ));

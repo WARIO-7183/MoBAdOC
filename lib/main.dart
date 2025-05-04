@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/login_screen.dart';
 import 'providers/chat_provider.dart';
 import 'config/api_config.dart';
-import 'config/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,11 +17,6 @@ void main() async {
     // You might want to handle this error differently in production
     rethrow;
   }
-  
-  // Initialize Firebase with options after environment variables are loaded
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
 
   // Initialize Supabase
   await Supabase.initialize(
@@ -31,38 +24,18 @@ void main() async {
     anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
   );
   
-  final String? groqApiKey = dotenv.env['GROQ_API_KEY'];
+  final String? openaiApiKey = dotenv.env['OPENAI_API_KEY'];
   
-  if (groqApiKey == null || groqApiKey.isEmpty) {
-    throw Exception('GROQ_API_KEY not found in .env file');
+  if (openaiApiKey == null || openaiApiKey.isEmpty) {
+    throw Exception('OPENAI_API_KEY not found in .env file');
   }
-
-  // Validate Firebase environment variables
-  _validateFirebaseEnvVars();
 
   // Validate Supabase environment variables
   _validateSupabaseEnvVars();
 
-  ApiConfig.setApiKey(groqApiKey);
+  ApiConfig.setApiKey(openaiApiKey);
   
   runApp(const MyApp());
-}
-
-// Function to validate Firebase environment variables
-void _validateFirebaseEnvVars() {
-  final requiredEnvVars = [
-    'FIREBASE_API_KEY',
-    'FIREBASE_APP_ID',
-    'FIREBASE_MESSAGING_SENDER_ID',
-    'FIREBASE_PROJECT_ID',
-    'FIREBASE_STORAGE_BUCKET',
-  ];
-  
-  for (final envVar in requiredEnvVars) {
-    if (dotenv.env[envVar] == null || dotenv.env[envVar]!.isEmpty) {
-      throw Exception('$envVar not found in .env file');
-    }
-  }
 }
 
 // Function to validate Supabase environment variables

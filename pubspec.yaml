@@ -18,10 +18,6 @@ dependencies:
   flutter_tts: ^3.8.5
   image_picker: ^1.0.7
   permission_handler: ^11.3.0
-  # Firebase packages
-  firebase_core: ^2.24.2
-  firebase_auth: ^4.15.3
-  cloud_firestore: ^4.13.6
   # Supabase packages
   supabase_flutter: ^2.3.4
   supabase: ^2.3.4

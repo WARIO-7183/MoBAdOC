@@ -5,7 +5,7 @@ import '../models/message.dart';
 
 class ChatService {
   final String apiKey;
-  final String baseUrl = dotenv.env['GROQ_API_URL'] ?? 'https://api.groq.com/openai/v1/chat/completions';
+  final String baseUrl = 'https://api.openai.com/v1/chat/completions';
   final http.Client _client = http.Client();
 
   ChatService({required this.apiKey});
@@ -45,7 +45,7 @@ class ChatService {
           'Authorization': 'Bearer $apiKey',
         },
         body: jsonEncode({
-          'model': 'meta-llama/llama-4-scout-17b-16e-instruct',  // Using Llama 2 model
+          'model': 'gpt-4',  // Using GPT-4 model
           'messages': messages,
           'temperature': 0.7,
           'max_tokens': 1000,
@@ -63,10 +63,10 @@ class ChatService {
           isUser: false,
         );
       } else {
-        print('Groq API Error: ${response.body}');  // Debug log
+        print('OpenAI API Error: ${response.body}');  // Debug log
         final errorBody = jsonDecode(response.body);
         final errorMessage = errorBody['error']?['message'] ?? 'Unknown error occurred';
-        throw Exception('Failed to get response from Groq: $errorMessage');
+        throw Exception('Failed to get response from OpenAI: $errorMessage');
       }
     } catch (e) {
       print('Error in sendMessageWithSystemPrompt: $e');  // Debug log
@@ -135,7 +135,7 @@ class ChatService {
           'Authorization': 'Bearer $apiKey',
         },
         body: jsonEncode({
-          'model': 'meta-llama/llama-4-scout-17b-16e-instruct',
+          'model': 'gpt-4-vision-preview',  // Using GPT-4 Vision model for image analysis
           'messages': messages,
           'temperature': 0.7,
           'max_tokens': 1000,
@@ -153,10 +153,10 @@ class ChatService {
           isUser: false,
         );
       } else {
-        print('Groq API Error: ${response.body}');
+        print('OpenAI API Error: ${response.body}');
         final errorBody = jsonDecode(response.body);
         final errorMessage = errorBody['error']?['message'] ?? 'Unknown error occurred';
-        throw Exception('Failed to get response from Groq: $errorMessage');
+        throw Exception('Failed to get response from OpenAI: $errorMessage');
       }
     } catch (e) {
       print('Error in sendMessageWithImage: $e');

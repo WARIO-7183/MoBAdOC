@@ -139,29 +139,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-
-              // Bottom Navigation Bar
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, -2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildNavItem(Icons.search, 'Search'),
-                    _buildNavItem(Icons.medical_services, 'Services'),
-                    _buildNavItem(Icons.settings, 'Settings'),
-                    _buildNavItem(Icons.person, 'Profile'),
-                  ],
-                ),
-              ),
             ],
           ),
         ),
