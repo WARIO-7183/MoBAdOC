@@ -1,15 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/supabase_service.dart';
 import 'chat_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final String phoneNumber;
-  final String userName;
 
   const HomeScreen({
     super.key,
     required this.phoneNumber,
-    required this.userName,
   });
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final _supabase = Supabase.instance.client;
+  late final SupabaseService _supabaseService;
+  String _userName = 'User';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _supabaseService = SupabaseService(_supabase);
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      final userProfile = await _supabaseService.getUserProfile(widget.phoneNumber);
+      if (userProfile != null && mounted) {
+        setState(() {
+          _userName = userProfile['name'] ?? 'User';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading profile: ${e.toString()}')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +83,7 @@ class HomeScreen extends StatelessWidget {
                     ),
                     Expanded(
                       child: Text(
-                        userName,
+                        _isLoading ? 'Loading...' : _userName,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 20,

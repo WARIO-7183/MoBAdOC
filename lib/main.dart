@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/login_screen.dart';
 import 'providers/chat_provider.dart';
 import 'config/api_config.dart';
@@ -23,6 +24,12 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialize Supabase
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL'] ?? '',
+    anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+  );
   
   final String? groqApiKey = dotenv.env['GROQ_API_KEY'];
   
@@ -32,6 +39,9 @@ void main() async {
 
   // Validate Firebase environment variables
   _validateFirebaseEnvVars();
+
+  // Validate Supabase environment variables
+  _validateSupabaseEnvVars();
 
   ApiConfig.setApiKey(groqApiKey);
   
@@ -46,6 +56,20 @@ void _validateFirebaseEnvVars() {
     'FIREBASE_MESSAGING_SENDER_ID',
     'FIREBASE_PROJECT_ID',
     'FIREBASE_STORAGE_BUCKET',
+  ];
+  
+  for (final envVar in requiredEnvVars) {
+    if (dotenv.env[envVar] == null || dotenv.env[envVar]!.isEmpty) {
+      throw Exception('$envVar not found in .env file');
+    }
+  }
+}
+
+// Function to validate Supabase environment variables
+void _validateSupabaseEnvVars() {
+  final requiredEnvVars = [
+    'SUPABASE_URL',
+    'SUPABASE_ANON_KEY',
   ];
   
   for (final envVar in requiredEnvVars) {

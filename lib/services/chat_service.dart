@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/message.dart';
 
 class ChatService {
   final String apiKey;
-  final String baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
+  final String baseUrl = dotenv.env['GROQ_API_URL'] ?? 'https://api.groq.com/openai/v1/chat/completions';
   final http.Client _client = http.Client();
 
   ChatService({required this.apiKey});

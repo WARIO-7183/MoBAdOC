@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'profile_setup_screen.dart';
+import '../services/supabase_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,6 +13,14 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
+  final _supabase = Supabase.instance.client;
+  late final SupabaseService _supabaseService;
+
+  @override
+  void initState() {
+    super.initState();
+    _supabaseService = SupabaseService(_supabase);
+  }
 
   @override
   void dispose() {
@@ -18,16 +28,43 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ProfileSetupScreen(
-            phoneNumber: _phoneController.text,
-          ),
-        ),
-      );
+      final phoneNumber = _phoneController.text;
+      
+      try {
+        // Check if user exists in Supabase
+        final userProfile = await _supabaseService.getUserProfile(phoneNumber);
+        
+        if (userProfile != null) {
+          // User exists, navigate to home screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProfileSetupScreen(
+                phoneNumber: phoneNumber,
+                isExistingUser: true,
+                existingProfile: userProfile,
+              ),
+            ),
+          );
+        } else {
+          // New user, navigate to profile setup
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProfileSetupScreen(
+                phoneNumber: phoneNumber,
+                isExistingUser: false,
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
     }
   }
 
