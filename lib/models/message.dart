@@ -4,6 +4,7 @@ class Message {
   final DateTime timestamp;
   final bool isUser;
   final String? imageUrl;
+  final List<String>? options;
 
   Message({
     required this.id,
@@ -11,6 +12,7 @@ class Message {
     required this.timestamp,
     required this.isUser,
     this.imageUrl,
+    this.options,
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class Message {
       timestamp: DateTime.parse(json['timestamp']),
       isUser: json['isUser'],
       imageUrl: json['imageUrl'],
+      options: json['options'] != null ? List<String>.from(json['options']) : null,
     );
   }
 
@@ -30,6 +33,7 @@ class Message {
       'timestamp': timestamp.toIso8601String(),
       'isUser': isUser,
       'imageUrl': imageUrl,
+      'options': options,
     };
   }
 } 

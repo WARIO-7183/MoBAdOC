@@ -23,9 +23,29 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _ageController = TextEditingController();
+  final _additionalHealthInfoController = TextEditingController();
   String _selectedGender = 'Male';
   final _supabase = Supabase.instance.client;
   late final SupabaseService _supabaseService;
+  
+  // List of common health issues
+  final List<String> _healthIssues = [
+    'Diabetes',
+    'High Blood Pressure',
+    'Heart Disease',
+    'Kidney Problems',
+    'Liver Disease',
+    'Lung Disease',
+    'Cancer',
+    'Transplants',
+    'Major Surgeries',
+    'Chronic Pain',
+    'Mental Health Conditions',
+    'Autoimmune Disorders',
+  ];
+  
+  // Selected health issues
+  List<String> _selectedHealthIssues = [];
 
   @override
   void initState() {
@@ -36,6 +56,25 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       _nameController.text = widget.existingProfile!['name'] ?? '';
       _ageController.text = widget.existingProfile!['age']?.toString() ?? '';
       _selectedGender = widget.existingProfile!['gender'] ?? 'Male';
+      
+      // Parse Medical_history field
+      final medicalHistory = widget.existingProfile!['Medical_history'] as String?;
+      if (medicalHistory != null && medicalHistory.isNotEmpty) {
+        // Split the medical history into health issues and additional info
+        final parts = medicalHistory.split('\n\n');
+        if (parts.isNotEmpty) {
+          // Parse health issues
+          if (parts[0].startsWith('Health Issues: ')) {
+            final issues = parts[0].substring('Health Issues: '.length).split(', ');
+            _selectedHealthIssues = issues;
+          }
+          
+          // Parse additional info
+          if (parts.length > 1 && parts[1].startsWith('Additional Information: ')) {
+            _additionalHealthInfoController.text = parts[1].substring('Additional Information: '.length);
+          }
+        }
+      }
     }
   }
 
@@ -43,6 +82,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   void dispose() {
     _nameController.dispose();
     _ageController.dispose();
+    _additionalHealthInfoController.dispose();
     super.dispose();
   }
 
@@ -52,6 +92,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         final name = _nameController.text;
         final age = int.parse(_ageController.text);
         final gender = _selectedGender;
+        final additionalHealthInfo = _additionalHealthInfoController.text;
 
         if (widget.isExistingUser) {
           // Update existing profile
@@ -60,6 +101,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             name: name,
             age: age,
             gender: gender,
+            healthIssues: _selectedHealthIssues,
+            additionalHealthInfo: additionalHealthInfo,
           );
         } else {
           // Create new profile
@@ -68,6 +111,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             name: name,
             age: age,
             gender: gender,
+            healthIssues: _selectedHealthIssues,
+            additionalHealthInfo: additionalHealthInfo,
           );
         }
 
@@ -154,6 +199,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   ),
                   const SizedBox(height: 16),
                   _buildGenderDropdown(),
+                  const SizedBox(height: 16),
+                  _buildHealthHistorySection(),
                   const SizedBox(height: 32),
                   ElevatedButton(
                     onPressed: _handleProfileSetup,
@@ -263,6 +310,86 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           }
         },
       ),
+    );
+  }
+
+  Widget _buildHealthHistorySection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Health History',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 8.0,
+                children: _healthIssues.map((issue) {
+                  return FilterChip(
+                    label: Text(issue),
+                    selected: _selectedHealthIssues.contains(issue),
+                    onSelected: (bool selected) {
+                      setState(() {
+                        if (selected) {
+                          _selectedHealthIssues.add(issue);
+                        } else {
+                          _selectedHealthIssues.remove(issue);
+                        }
+                      });
+                    },
+                    backgroundColor: Colors.white,
+                    selectedColor: const Color(0xFF4A6FFF).withOpacity(0.2),
+                    checkmarkColor: const Color(0xFF4A6FFF),
+                    labelStyle: TextStyle(
+                      color: _selectedHealthIssues.contains(issue)
+                          ? const Color(0xFF4A6FFF)
+                          : Colors.black87,
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: TextFormField(
+                  controller: _additionalHealthInfoController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: 'Additional Health Information',
+                    hintText: 'Please provide any other relevant health information',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ],
     );
   }
 } 

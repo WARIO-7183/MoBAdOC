@@ -347,78 +347,122 @@ class _MessageBubbleState extends State<_MessageBubble> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Column(
-        crossAxisAlignment: widget.message.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: widget.message.isUser
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           Container(
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.75,
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: widget.message.isUser 
-                  ? const Color(0xFFE7FFDB)
-                  : Colors.white.withOpacity(0.95),
-              borderRadius: BorderRadius.circular(12),
+              color: widget.message.isUser
+                  ? const Color(0xFF4A6FFF)
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 4,
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 5,
                   offset: const Offset(0, 2),
                 ),
               ],
             ),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (widget.message.imageUrl != null) ...[
-                  _buildImage(),
-                  const SizedBox(height: 8),
-                ],
                 Text(
                   widget.message.text,
-                  style: kMessageStyle,
-                ),
-                if (!widget.message.isUser) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
-                          size: 20,
-                          color: isLiked ? Colors.black : Colors.grey,
-                        ),
-                        onPressed: _handleLike,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                      const SizedBox(width: 12),
-                      IconButton(
-                        icon: Icon(
-                          isDisliked ? Icons.thumb_down : Icons.thumb_down_outlined,
-                          size: 20,
-                          color: isDisliked ? Colors.black : Colors.grey,
-                        ),
-                        onPressed: _handleDislike,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                      const SizedBox(width: 12),
-                      IconButton(
-                        icon: const Icon(Icons.copy_outlined, size: 20),
-                        onPressed: _copyToClipboard,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                    ],
+                  style: TextStyle(
+                    color: widget.message.isUser ? Colors.white : Colors.black87,
+                    fontSize: 16,
                   ),
-                ],
+                ),
+                if (widget.message.options != null && widget.message.options!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Divider(color: Colors.grey),
+                        const SizedBox(height: 8),
+                        ...widget.message.options!.map((option) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              context.read<ChatProvider>().sendMessage(option);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF4A6FFF).withOpacity(0.1),
+                              foregroundColor: const Color(0xFF4A6FFF),
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            child: Text(
+                              option,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                        )),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
+          if (!widget.message.isUser)
+            Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.thumb_up,
+                      color: isLiked ? Colors.blue : Colors.grey,
+                      size: 20,
+                    ),
+                    onPressed: _handleLike,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: Icon(
+                      Icons.thumb_down,
+                      color: isDisliked ? Colors.red : Colors.grey,
+                      size: 20,
+                    ),
+                    onPressed: _handleDislike,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.content_copy,
+                      color: Colors.grey,
+                      size: 20,
+                    ),
+                    onPressed: _copyToClipboard,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

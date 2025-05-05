@@ -28,10 +28,10 @@ class ChatProvider with ChangeNotifier {
         _userAge = userProfile['age'] ?? 0;
         _userGender = userProfile['gender'] ?? '';
         
-        // Add initial greeting message with user's name and medical history question
+        // Add initial greeting message with user's name
         _messages.add(Message(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
-          text: "Hello ${_userName}! I'm your medical assistant. To better assist you, could you please tell me about any chronic conditions or medical history you have? For example:\n\n1. Diabetes\n2. High blood pressure\n3. Heart conditions\n4. Liver or kidney problems\n5. None of the above\n\nPlease select a number or describe your condition in your own words.",
+          text: "Hello ${_userName}! What brings you here today?",
           timestamp: DateTime.now(),
           isUser: false,
         ));
@@ -42,7 +42,7 @@ class ChatProvider with ChangeNotifier {
       // Add generic greeting if profile loading fails
       _messages.add(Message(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        text: "Hello! I'm your medical assistant. To better assist you, could you please tell me about any chronic conditions or medical history you have? For example:\n\n1. Diabetes\n2. High blood pressure\n3. Heart conditions\n4. Liver or kidney problems\n5. None of the above\n\nPlease select a number or describe your condition in your own words.",
+        text: "Hello! What brings you here today?",
         timestamp: DateTime.now(),
         isUser: false,
       ));
@@ -53,41 +53,67 @@ class ChatProvider with ChangeNotifier {
   String get _systemPrompt => """
 You are a friendly, conversational medical assistant. Follow these guidelines:
 
-1. Start by asking about the user's medical history and chronic conditions (diabetes, high blood pressure, heart conditions, liver/kidney problems, etc.).
+1. Start by asking what brings the user here today. Do not ask about medical history as it's already available.
 
-2. When presenting options to the user, always format them as a simple numbered list:
-   Example:
+2. When analyzing the user's current health concern:
+   - Consider their age ($_userAge) and gender ($_userGender)
+   - Check if there's any connection between their current issue and their medical history
+   - If there's a relevant connection, mention it briefly and explain why it's important
+   - If there's no relevant connection, focus on the current issue without mentioning past conditions
+
+3. When presenting options to the user, format them in a special way that can be parsed for selection:
+   [OPTIONS]
    Please describe your headache:
-   1. Sharp pain
-   2. Dull ache
-   3. Throbbing sensation
-   4. Other (please describe)
+   [1] Sharp pain
+   [2] Dull ache
+   [3] Throbbing sensation
+   [4] Other (please describe)
+   [/OPTIONS]
    
-   Reply with the number of your choice or type your own response.
+   The user can select an option by touching it or type their own response.
 
-3. When asking about health issues, provide examples as numbered options.
 4. Keep responses short and conversational - use 1-3 sentences where possible.
 5. Speak naturally like a real doctor or nurse would in conversation.
 6. Ask focused follow-up questions about symptoms - one question at a time.
-7. Present options when appropriate (like pain types, severity, etc.) using simple numbers (1. 2. 3. etc).
+7. Present options when appropriate (like pain types, severity, etc.) using the [OPTIONS] format.
 8. Use a warm, empathetic tone while maintaining professionalism.
 9. For common ailments, suggest 2-3 specific over-the-counter medicines available in India from our medicine list, including both brand name and generic name. For example: "For your fever, you might consider taking:
 
-    1. Dolo 650 (Paracetamol)
-    2. Crocin (Paracetamol)"
+    [OPTIONS]
+    [1] Dolo 650 (Paracetamol)
+    [2] Crocin (Paracetamol)
+    [/OPTIONS]"
 
 10. After suggesting medication, recommend consulting a healthcare professional for proper diagnosis and treatment.
 11. Clearly state you're an AI assistant, not a replacement for professional medical care.
 12. When discussing serious symptoms, recommend seeing a doctor immediately.
 13. Prioritize clarity and brevity over comprehensiveness.
-14. Consider the user's age ($_userAge) and gender ($_userGender) when providing medical advice.
-15. Address the user by their name ($_userName) when appropriate.
-16. Take into account any chronic conditions or medical history the user has shared when providing advice.
+14. Address the user by their name ($_userName) when appropriate.
+15. Take into account the user's medical history from their profile when providing advice, but only mention it if it's relevant to their current concern.
 
-Remember: Be conversational and human-like. Focus on understanding the user's medical concerns and providing appropriate guidance based on their medical history.
+Remember: Be conversational and human-like. Focus on understanding the user's current medical concerns and providing appropriate guidance based on their age, gender, and medical history.
 """;
 
   List<Message> get messages => _messages;
+
+  // Add method to parse options from message
+  List<String>? _parseOptions(String message) {
+    final optionsMatch = RegExp(r'\[OPTIONS\](.*?)\[/OPTIONS\]', dotAll: true).firstMatch(message);
+    if (optionsMatch == null) return null;
+    
+    final optionsText = optionsMatch.group(1);
+    final options = RegExp(r'\[(\d+)\]\s*(.*?)(?=\n|$)')
+        .allMatches(optionsText!)
+        .map((match) => match.group(2)!)
+        .toList();
+    
+    return options;
+  }
+
+  // Add method to get message without options
+  String _getMessageWithoutOptions(String message) {
+    return message.replaceAll(RegExp(r'\[OPTIONS\].*?\[/OPTIONS\]', dotAll: true), '').trim();
+  }
 
   Future<void> sendMessage(String text) async {
     try {
@@ -107,7 +133,21 @@ Remember: Be conversational and human-like. Focus on understanding the user's me
         _systemPrompt,
         _messages,
       );
-      _messages.add(botMessage);
+      
+      // Parse options from the bot's response
+      final options = _parseOptions(botMessage.text);
+      final messageWithoutOptions = _getMessageWithoutOptions(botMessage.text);
+      
+      // Create a new message with parsed options
+      final messageWithOptions = Message(
+        id: botMessage.id,
+        text: messageWithoutOptions,
+        timestamp: botMessage.timestamp,
+        isUser: false,
+        options: options,
+      );
+      
+      _messages.add(messageWithOptions);
       notifyListeners();
     } catch (e) {
       // Handle error by showing error message
@@ -127,7 +167,7 @@ Remember: Be conversational and human-like. Focus on understanding the user's me
     // Add initial greeting message after clearing
     _messages.add(Message(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      text: "Hello ${_userName}! I'm your medical assistant. To better assist you, could you please tell me about any chronic conditions or medical history you have? For example:\n\n1. Diabetes\n2. High blood pressure\n3. Heart conditions\n4. Liver or kidney problems\n5. None of the above\n\nPlease select a number or describe your condition in your own words.",
+      text: "Hello ${_userName}! What brings you here today?",
       timestamp: DateTime.now(),
       isUser: false,
     ));
