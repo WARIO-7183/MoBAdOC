@@ -1,6 +1,6 @@
 # 🩺 Medical Assistant Chatbot
 
-A modern, AI-powered Flutter chat app for medical guidance and report analysis.
+A modern, AI-powered Flutter chat app for medical guidance, multilingual support, and health record management.
 
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
@@ -10,14 +10,17 @@ A modern, AI-powered Flutter chat app for medical guidance and report analysis.
 ## ✨ Features
 
 - **Conversational AI Medical Assistant** (powered by OpenAI GPT-4)
-- 📋 Asks about your chronic conditions (diabetes, hypertension, etc.) at the start
-- 🧑‍⚕️ Personalized advice based on your profile (name, age, gender, medical history)
-- 💬 Clean, modern chat interface
-- 🖼️ Upload and analyze medical images/reports
-- 🗣️ Voice input support
-- 👍👎 Like/Dislike feedback for responses
-- 📋 Copy message functionality
-- ➕ Start new consultations easily
+- 🌐 **Multilingual Chat**: Interact in English, Hindi, Kannada, Telugu, Tamil, or Malayalam
+- 🧑‍⚕️ **Personalized Profile**: Name, age, gender, and detailed medical history
+- 🗂️ **Profile Viewer**: View your profile details anytime from the chat screen
+- 💬 **Selectable Options**: Tap on suggested options instead of typing
+- 🗣️ **Voice Input**: Speak your questions or responses
+- 🖼️ **Upload & Analyze Medical Images/Reports**
+- 👍👎 **Like/Dislike Feedback** for responses
+- 📋 **Copy Message** functionality
+- ➕ **Start New Consultations** easily
+- 💾 **Save Chat Record**: Store your entire conversation in the database
+- 📝 **Generate PDF Report**: Create a consolidated medical report (profile + chat) as a PDF using OpenAI
 
 ---
 
@@ -40,6 +43,8 @@ flutter pub get
    - Create a `.env` file in the root directory:
      ```
      OPENAI_API_KEY=your_openai_api_key_here
+     SUPABASE_URL=your_supabase_url
+     SUPABASE_ANON_KEY=your_supabase_anon_key
      ```
 2. **Run the app:**
    ```bash
@@ -51,19 +56,22 @@ flutter pub get
 ## 🏥 How It Works
 
 1. **Onboarding:**
-   - Set up your profile (name, age, gender)
-   - On first chat, the AI asks about your chronic conditions (e.g., diabetes, high blood pressure, heart/kidney/liver problems)
-   - No more repetitive prompts for name/age/gender!
+   - Set up your profile (name, age, gender, medical history)
+   - Existing users skip profile setup and go straight to the home screen
 
 2. **Chatting:**
-   - Ask health questions or describe symptoms
-   - Upload medical images or reports for instant AI analysis
+   - Select your preferred language (English, Hindi, Kannada, Telugu, Tamil, Malayalam)
+   - Ask health questions, describe symptoms, or upload medical images
    - Receive clear, empathetic, and professional responses
+   - Tap on suggested options for quick replies
 
 3. **Features:**
-   - Start new consultations anytime
+   - View your profile anytime from the chat screen
+   - Save your chat record to the database with one tap
+   - Generate a consolidated PDF report (profile + chat) for sharing or personal records
    - Like/dislike and copy responses
    - Voice input for hands-free chatting
+   - Start new consultations anytime
 
 ---
 
@@ -76,7 +84,7 @@ flutter pub get
 ## 🔒 Security & Privacy
 - All medical data is processed securely
 - Images are converted to base64 for secure transmission
-- No medical data is stored permanently
+- Chat records and reports are stored securely in Supabase
 - **Not a replacement for professional medical care**
 
 ---
@@ -89,7 +97,9 @@ flutter pub get
 - `http` – API communication
 - `flutter_dotenv` – Environment configuration
 - `image_picker`, `file_picker` – Image/file handling
-- `speech_to_text` – Voice input
+- `pdf`, `path_provider` – PDF report generation and storage
+- `flutter_tts` – Text-to-speech
+- `permission_handler` – Permissions
 
 **Architecture:**
 - Provider pattern for state management
