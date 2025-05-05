@@ -4,9 +4,11 @@ import 'package:provider/provider.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
 import '../models/message.dart';
 import '../providers/chat_provider.dart';
+import '../services/supabase_service.dart';
 import 'dart:convert';
 
 // Add TextStyle constants for consistent font usage
@@ -42,7 +44,12 @@ const kSubtitleStyle = TextStyle(
 );
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  final String phoneNumber;
+  
+  const ChatScreen({
+    super.key,
+    required this.phoneNumber,
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -51,12 +58,75 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  late final SupabaseService _supabaseService;
+  Map<String, dynamic>? _userProfile;
 
   @override
-  void dispose() {
-    _messageController.dispose();
-    _scrollController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _supabaseService = SupabaseService(Supabase.instance.client);
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      final profile = await _supabaseService.getUserProfile(widget.phoneNumber);
+      setState(() {
+        _userProfile = profile;
+      });
+    } catch (e) {
+      debugPrint('Error loading user profile: $e');
+    }
+  }
+
+  void _showProfileDialog() {
+    if (_userProfile == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Profile Details', style: kHeaderStyle),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _ProfileDetailRow(
+                icon: Icons.person,
+                label: 'Name',
+                value: _userProfile!['name'] ?? 'Not provided',
+              ),
+              _ProfileDetailRow(
+                icon: Icons.phone,
+                label: 'Phone',
+                value: widget.phoneNumber,
+              ),
+              _ProfileDetailRow(
+                icon: Icons.cake,
+                label: 'Age',
+                value: _userProfile!['age']?.toString() ?? 'Not provided',
+              ),
+              _ProfileDetailRow(
+                icon: Icons.man,
+                label: 'Gender',
+                value: _userProfile!['gender'] ?? 'Not provided',
+              ),
+              _ProfileDetailRow(
+                icon: Icons.medical_services,
+                label: 'Medical History',
+                value: _userProfile!['Medical_history'] ?? 'Not provided',
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _scrollToBottom() {
@@ -116,6 +186,10 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person_outline, color: Colors.black),
+            onPressed: _showProfileDialog,
+          ),
           IconButton(
             icon: const Icon(Icons.add, color: Colors.black),
             onPressed: () => _createNewChat(context),
@@ -359,7 +433,7 @@ class _MessageBubbleState extends State<_MessageBubble> {
             ),
             decoration: BoxDecoration(
               color: widget.message.isUser
-                  ? const Color(0xFF4A6FFF)
+                  ? const Color.fromARGB(255, 76, 203, 104)
                   : Colors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
@@ -722,6 +796,53 @@ class _MessageInputState extends State<_MessageInput> {
                 Icons.send,
                 color: Colors.white,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileDetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _ProfileDetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.grey[600]),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

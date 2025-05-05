@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'profile_setup_screen.dart';
+import 'home_screen.dart';
 import '../services/supabase_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -37,14 +38,12 @@ class _LoginScreenState extends State<LoginScreen> {
         final userProfile = await _supabaseService.getUserProfile(phoneNumber);
         
         if (userProfile != null) {
-          // User exists, navigate to home screen
+          // User exists, navigate directly to home screen
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => ProfileSetupScreen(
+              builder: (context) => HomeScreen(
                 phoneNumber: phoneNumber,
-                isExistingUser: true,
-                existingProfile: userProfile,
               ),
             ),
           );
