@@ -6,6 +6,8 @@ import '../services/chat_service.dart';
 import '../services/supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:path_provider/path_provider.dart';
 
 class ChatProvider with ChangeNotifier {
   final List<Message> _messages = [];
@@ -63,10 +65,8 @@ class ChatProvider with ChangeNotifier {
 2. स्पष्ट और सरल भाषा का प्रयोग करें
 3. यदि आप किसी प्रश्न का उत्तर नहीं जानते हैं, तो ईमानदारी से कहें
 4. गंभीर लक्षणों के मामले में तुरंत चिकित्सा सहायता लेने की सलाह दें
-5. विकल्पों को निम्नलिखित प्रारूप में प्रस्तुत करें:
-   [विकल्प 1]
-   [विकल्प 2]
-   [विकल्प 3]''';
+5. जब भी आप विकल्प प्रस्तुत करें, उन्हें हमेशा इस विशेष प्रारूप में दें:
+[OPTIONS]\n[1] विकल्प 1\n[2] विकल्प 2\n[/OPTIONS]\nकभी भी [Option 1], [Option 2] या अन्य स्वरूपों का उपयोग न करें। केवल [OPTIONS] ब्लॉक का उपयोग करें।''';
       case 'kn':
         return '''ನೀವು ವೈದ್ಯಕೀಯ ಸಹಾಯಕರಾಗಿದ್ದೀರಿ. ರೋಗಿಗಳಿಗೆ ಅವರು ಆರೋಗ್ಯ ಸಮಸ್ಯಲು ಬಗ್ಗೆ ಸಲಹೆ ನೀಡುವುದು ನಿಮ್ಮ ಕೆಲಸ. ನೀವು AI ಸಹಾಯಕರಾಗಿದ್ದೀರಿ ಮತ್ತು ವೃತ್ತಿಪರ ವೈದ್ಯಕೀಯ ಚಿಕಿತ್ಸೆಯ ಬದಲಿಯಲ್ಲ ಎಂಬುದನ್ನು ದಯವಿಟ್ಟು ಗಮನಿಸಿ.
 
@@ -75,22 +75,18 @@ class ChatProvider with ChangeNotifier {
 2. ಸ್ಪಷ್ಟ ಮತ್ತು ಸರಳ ಭಾಷೆಯನ್ನು ಬಳಸಿ
 3. ನೀವು ಯಾವುದೇ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರವನ್ನು ತಿಳಿದಿಲ್ಲದಿದ್ದರೆ, ಪ್ರಾಮಾಣಿಕವಾಗಿ ಹೇಳಿ
 4. ಗಂಭೀರ ಲಕ್ಷಣಗಳ ಸಂದರ್ಭದಲ್ಲಿ ತಕ್ಷಣ ವೈದ್ಯಕೀಯ ಸಹಾಯ ಪಡೆಯಲು ಸಲಹೆ ನೀಡಿ
-5. ಆಯ್ಕೆಗಳನ್ನು ಈ ಕೆಳಗಿನ ರೂಪದಲ್ಲಿ ಪ್ರಸ್ತುತಪಡಿಸಿ:
-   [ಆಯ್ಕೆ 1]
-   [ಆಯ್ಕೆ 2]
-   [ಆಯ್ಕೆ 3]''';
+5. ಯಾವಾಗಲೂ ಆಯ್ಕೆಗಳನ್ನು ಈ ವಿಶೇಷ ರೂಪದಲ್ಲಿ ಮಾತ್ರ ನೀಡಿರಿ:
+[OPTIONS]\n[1] ಆಯ್ಕೆ 1\n[2] ಆಯ್ಕೆ 2\n[/OPTIONS]\n[Option 1], [Option 2] ಅಥವಾ ಬೇರೆ ರೂಪಗಳನ್ನು ಬಳಸಬೇಡಿ. ಕೇವಲ [OPTIONS] ಬ್ಲಾಕ್ ಬಳಸಿ.''';
       case 'te':
         return '''మీరు ఒక వైద్య సహాయకుడు. రోగులకు వారి ఆరోగ్య సమస్యల గురించి సలహాలు ఇవ్వడం మీ పని. మీరు AI సహాయకుడు మరియు వృత్తిపర వైద్య సంరక్షణకు ప్రత్యామ్నాయం కాదని దయచేసి గమనించండి.
 
 మీరు ఈ క్రింది మార్గదర్శకాలను అనుసరించాలి:
 1. ఎల్లప్పుడూ సానుభూతి మరియు అవగాహనతో ఉండండి
-2. స్పష್టమైన మరియు సరళమైన భాషను ఉపయోగించండి
-3. మీకు ఏదైనా ప్రశ్నకు సమాధానం తెలియకపోతే, నేర్మైయాకచేసి పఱయుక
-4. తీవ్రమైన లక్షణాల సందర్భంలో వెంటనే వైద్య సహాయం పొందమాట్లు ఉపదేశిక്కుక
-5. ఎంపికలను ఈ క్రింది రూపంలో ప్రదర్శించండి:
-   [ఎంపిక 1]
-   [ఎంపిక 2]
-   [ఎంపిక 3]''';
+2. స్పష్టమైన మరియు సరళమైన భాషను ఉపయోగించండి
+3. మీకు ఏదైనా ప్రశ్నకు సమాధానం తెలియకపోతే, నిజాయితీగా చెప్పండి
+4. తీవ్రమైన లక్షణాల సందర్భంలో వెంటనే వైద్య సహాయం పొందమని సలహా ఇవ్వండి
+5. ఎప్పుడైనా ఎంపికలను ఈ ప్రత్యేక ఫార్మాట్‌లో మాత్రమే ఇవ్వండి:
+[OPTIONS]\n[1] ఎంపిక 1\n[2] ఎంపిక 2\n[/OPTIONS]\n[Option 1], [Option 2] లేదా ఇతర ఫార్మాట్‌లను ఉపయోగించవద్దు. కేవలం [OPTIONS] బ్లాక್‌ను ఉపయోగించండి.''';
       case 'ta':
         return '''நீங்கள் ஒரு மருத்துவ உதவியாளர். நோயாளிகளுக்கு அவர்களின் உடல்நலம் குறித்த கவலைகள் குறித்து ஆலோசனை வழங்குவது உங்கள் வேலை. நீங்கள் ஒரு AI உதவியாளர் மற்றும் தொழில்முறை மருத்துவ பராமரிப்புக்கு மாற்றாக இல்லை என்பதை நினைவில் கொள்ளவும்.
 
@@ -99,10 +95,8 @@ class ChatProvider with ChangeNotifier {
 2. தெளிவான மற்றும் எளிய மொழியைப் பயன்படுத்தவும்
 3. எந்த கேள்விக்கும் பதில் தெரியாவிட்டால், நேர்மையாகச் சொல்லுங்கள்
 4. தீவிர அறிகுறிகள் ஏற்பட்டால் உடனடியாக மருத்துவ உதவி பெறுமாறு அறிவுறுத்தவும்
-5. விருப்பங்களை பின்வரும் வடிவத்தில் வழங்கவும்:
-   [விருப்பம் 1]
-   [விருப்பம் 2]
-   [விருப்பம் 3]''';
+5. எப்போதும் விருப்பங்களை இந்த சிறப்பு வடிவத்தில் மட்டும் வழங்கவும்:
+[OPTIONS]\n[1] விருப்பம் 1\n[2] விருப்பம் 2\n[/OPTIONS]\n[Option 1], [Option 2] அல்லது பிற வடிவங்களை பயன்படுத்த வேண்டாம். [OPTIONS] பிளாக்கை மட்டும் பயன்படுத்தவும்.''';
       case 'ml':
         return '''നിങ്ങൾ ഒരു മെഡിക്കൽ അസിസ്റ്റന്റാണ്. രോഗികൾക്ക് അവരുടെ ആരോഗ്യ ആശങ്കകളെക്കുറിച്ച് ഉപദേശം നൽകുക എന്നതാണ് നിങ്ങളുടെ ജോലി. നിങ്ങൾ ഒരു AI അസിസ്റ്റന്റ് ആണെന്നും പ്രൊഫഷണൽ മെഡിക്കൽ കെയർ ഒരു പകരമല്ലെന്നും ദയവായി ശ്രദ്ധിക്കുക.
 
@@ -123,10 +117,8 @@ You should follow these guidelines:
 2. Use clear and simple language
 3. If you don't know the answer to any question, say so honestly
 4. Advise seeking immediate medical help in case of serious symptoms
-5. Present options in the following format:
-   [Option 1]
-   [Option 2]
-   [Option 3]''';
+5. Whenever you present options, ALWAYS use this special format:
+[OPTIONS]\n[1] Option 1\n[2] Option 2\n[/OPTIONS]\nNever use [Option 1], [Option 2], or any other format. Only use the [OPTIONS] block.''';
     }
   }
 
@@ -345,5 +337,66 @@ You should follow these guidelines:
     _currentLanguage = languageCode;
     _addInitialMessage();
     notifyListeners();
+  }
+
+  // Serialize the conversation as JSON
+  String get conversationJson {
+    final messagesJson = _messages.map((msg) => msg.toJson()).toList();
+    return jsonEncode(messagesJson);
+  }
+
+  // Save the conversation to the database
+  Future<void> saveConversationToDatabase(String phoneNumber) async {
+    final chatRecord = conversationJson;
+    await _supabaseService.updateChatRecord(phoneNumber: phoneNumber, chatRecord: chatRecord);
+  }
+
+  Future<String?> generateAndSaveReport(String phoneNumber) async {
+    try {
+      // 1. Fetch all user data
+      final userData = await _supabaseService.getFullUserRecord(phoneNumber);
+      if (userData == null) throw Exception('User data not found');
+      final chatRecord = userData['Chat_record'] ?? '';
+
+      // 2. Prepare prompt for OpenAI
+      final prompt = '''Generate a consolidated medical report for the following user. Include all relevant details in a clear, professional, and human-readable format. Use headings and sections where appropriate.
+
+User Profile:
+${userData.toString()}
+
+Chat Conversation:
+$chatRecord
+
+The report should be suitable for sharing with a doctor or for personal records.''';
+
+      // 3. Get report from OpenAI
+      final reportMessage = await _chatService.sendMessageWithSystemPrompt(
+        prompt,
+        '',
+        [],
+      );
+      final reportText = reportMessage.text;
+
+      // 4. Generate PDF
+      final pdf = pw.Document();
+      pdf.addPage(
+        pw.Page(
+          build: (pw.Context context) => pw.Container(
+            padding: const pw.EdgeInsets.all(24),
+            child: pw.Text(reportText, style: pw.TextStyle(fontSize: 14)),
+          ),
+        ),
+      );
+
+      // 5. Save PDF locally
+      final outputDir = await getApplicationDocumentsDirectory();
+      final filePath = '${outputDir.path}/Medical_Report_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      final file = File(filePath);
+      await file.writeAsBytes(await pdf.save());
+      return filePath;
+    } catch (e) {
+      print('Error generating report: $e');
+      return null;
+    }
   }
 } 

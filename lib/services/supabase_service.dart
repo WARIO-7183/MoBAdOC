@@ -99,4 +99,33 @@ class SupabaseService {
       throw Exception('Failed to update user profile: $e');
     }
   }
+
+  // Update chat record for a user
+  Future<void> updateChatRecord({
+    required String phoneNumber,
+    required String chatRecord,
+  }) async {
+    try {
+      await _supabaseClient
+          .from('user_profiles')
+          .update({'Chat_record': chatRecord})
+          .eq('phone_number', phoneNumber);
+    } catch (e) {
+      throw Exception('Failed to update chat record: $e');
+    }
+  }
+
+  // Fetch all columns for a user
+  Future<Map<String, dynamic>?> getFullUserRecord(String phoneNumber) async {
+    try {
+      final response = await _supabaseClient
+          .from('user_profiles')
+          .select()
+          .eq('phone_number', phoneNumber)
+          .single();
+      return response;
+    } catch (e) {
+      return null;
+    }
+  }
 } 

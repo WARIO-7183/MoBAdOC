@@ -243,12 +243,58 @@ class _ChatScreenState extends State<ChatScreen> {
             onPressed: _showLanguageDialog,
           ),
           IconButton(
+            icon: const Icon(Icons.save, color: Colors.black),
+            tooltip: 'Save Conversation',
+            onPressed: () async {
+              await context.read<ChatProvider>().saveConversationToDatabase(widget.phoneNumber);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Conversation saved to database!')),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.person_outline, color: Colors.black),
             onPressed: _showProfileDialog,
           ),
           IconButton(
             icon: const Icon(Icons.add, color: Colors.black),
             onPressed: () => _createNewChat(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.description, color: Colors.black),
+            tooltip: 'Generate Report',
+            onPressed: () async {
+              final filePath = await context.read<ChatProvider>().generateAndSaveReport(widget.phoneNumber);
+              if (filePath != null) {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Report Generated'),
+                    content: Text('PDF saved at:\n$filePath'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('OK'),
+                      ),
+                    ],
+                  ),
+                );
+              } else {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Error'),
+                    content: const Text('Failed to generate report.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('OK'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            },
           ),
         ],
       ),

@@ -21,6 +21,8 @@ dependencies:
   # Supabase packages
   supabase_flutter: ^2.3.4
   supabase: ^2.3.4
+  pdf: ^3.10.4
+  path_provider: ^2.1.2
 
 dev_dependencies:
   flutter_test:
