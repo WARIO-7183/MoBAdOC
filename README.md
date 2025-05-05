@@ -75,12 +75,6 @@ flutter pub get
 
 ---
 
-## 🖼️ Screenshots
-
-> _Add your app screenshots here for a more beautiful README!_
-
----
-
 ## 🔒 Security & Privacy
 - All medical data is processed securely
 - Images are converted to base64 for secure transmission
