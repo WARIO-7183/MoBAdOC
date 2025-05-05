@@ -5,6 +5,7 @@ import '../models/message.dart';
 import '../services/chat_service.dart';
 import '../services/supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/material.dart';
 
 class ChatProvider with ChangeNotifier {
   final List<Message> _messages = [];
@@ -13,11 +14,13 @@ class ChatProvider with ChangeNotifier {
   String _userName = 'User';
   int _userAge = 0;
   String _userGender = '';
+  String _currentLanguage = 'en';
 
   ChatProvider({required String apiKey}) 
       : _chatService = ChatService(apiKey: apiKey),
         _supabaseService = SupabaseService(Supabase.instance.client) {
     _loadUserProfile();
+    _addInitialMessage();
   }
 
   Future<void> _loadUserProfile() async {
@@ -50,49 +53,136 @@ class ChatProvider with ChangeNotifier {
     }
   }
 
-  String get _systemPrompt => """
-You are a friendly, conversational medical assistant. Follow these guidelines:
+  String get _systemPrompt {
+    switch (_currentLanguage) {
+      case 'hi':
+        return '''आप एक चिकित्सा सहायक हैं। आपका काम रोगियों को उनकी स्वास्थ्य संबंधी चिंताओं के बारे में सलाह देना है। कृपया ध्यान दें कि आप एक AI सहायक हैं और पेशेवर चिकित्सा देखभाल का विकल्प नहीं हैं।
 
-1. Start by asking what brings the user here today. Do not ask about medical history as it's already available.
+आपको निम्नलिखित दिशा-निर्देशों का पालन करना चाहिए:
+1. हमेशा सहानुभूतिपूर्ण और समझदार बनें
+2. स्पष्ट और सरल भाषा का प्रयोग करें
+3. यदि आप किसी प्रश्न का उत्तर नहीं जानते हैं, तो ईमानदारी से कहें
+4. गंभीर लक्षणों के मामले में तुरंत चिकित्सा सहायता लेने की सलाह दें
+5. विकल्पों को निम्नलिखित प्रारूप में प्रस्तुत करें:
+   [विकल्प 1]
+   [विकल्प 2]
+   [विकल्प 3]''';
+      case 'kn':
+        return '''ನೀವು ವೈದ್ಯಕೀಯ ಸಹಾಯಕರಾಗಿದ್ದೀರಿ. ರೋಗಿಗಳಿಗೆ ಅವರು ಆರೋಗ್ಯ ಸಮಸ್ಯಲು ಬಗ್ಗೆ ಸಲಹೆ ನೀಡುವುದು ನಿಮ್ಮ ಕೆಲಸ. ನೀವು AI ಸಹಾಯಕರಾಗಿದ್ದೀರಿ ಮತ್ತು ವೃತ್ತಿಪರ ವೈದ್ಯಕೀಯ ಚಿಕಿತ್ಸೆಯ ಬದಲಿಯಲ್ಲ ಎಂಬುದನ್ನು ದಯವಿಟ್ಟು ಗಮನಿಸಿ.
 
-2. When analyzing the user's current health concern:
-   - Consider their age ($_userAge) and gender ($_userGender)
-   - Check if there's any connection between their current issue and their medical history
-   - If there's a relevant connection, mention it briefly and explain why it's important
-   - If there's no relevant connection, focus on the current issue without mentioning past conditions
+ನೀವು ಈ ಕೆಳಗಿನ ಮಾರ್ಗದರ್ಶನಗಳನ್ನು ಅನುಸರಿಸಬೇಕು:
+1. ಯಾವಾಗಲೂ ಸಹಾನುಭೂತಿಯುತ ಮತ್ತು ತಿಳಿವಳಿಕೆಯುಳ್ಳವರಾಗಿರಿ
+2. ಸ್ಪಷ್ಟ ಮತ್ತು ಸರಳ ಭಾಷೆಯನ್ನು ಬಳಸಿ
+3. ನೀವು ಯಾವುದೇ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರವನ್ನು ತಿಳಿದಿಲ್ಲದಿದ್ದರೆ, ಪ್ರಾಮಾಣಿಕವಾಗಿ ಹೇಳಿ
+4. ಗಂಭೀರ ಲಕ್ಷಣಗಳ ಸಂದರ್ಭದಲ್ಲಿ ತಕ್ಷಣ ವೈದ್ಯಕೀಯ ಸಹಾಯ ಪಡೆಯಲು ಸಲಹೆ ನೀಡಿ
+5. ಆಯ್ಕೆಗಳನ್ನು ಈ ಕೆಳಗಿನ ರೂಪದಲ್ಲಿ ಪ್ರಸ್ತುತಪಡಿಸಿ:
+   [ಆಯ್ಕೆ 1]
+   [ಆಯ್ಕೆ 2]
+   [ಆಯ್ಕೆ 3]''';
+      case 'te':
+        return '''మీరు ఒక వైద్య సహాయకుడు. రోగులకు వారి ఆరోగ్య సమస్యల గురించి సలహాలు ఇవ్వడం మీ పని. మీరు AI సహాయకుడు మరియు వృత్తిపర వైద్య సంరక్షణకు ప్రత్యామ్నాయం కాదని దయచేసి గమనించండి.
 
-3. When presenting options to the user, format them in a special way that can be parsed for selection:
-   [OPTIONS]
-   Please describe your headache:
-   [1] Sharp pain
-   [2] Dull ache
-   [3] Throbbing sensation
-   [4] Other (please describe)
-   [/OPTIONS]
-   
-   The user can select an option by touching it or type their own response.
+మీరు ఈ క్రింది మార్గదర్శకాలను అనుసరించాలి:
+1. ఎల్లప్పుడూ సానుభూతి మరియు అవగాహనతో ఉండండి
+2. స్పష್టమైన మరియు సరళమైన భాషను ఉపయోగించండి
+3. మీకు ఏదైనా ప్రశ్నకు సమాధానం తెలియకపోతే, నేర్మైయాకచేసి పఱయుక
+4. తీవ్రమైన లక్షణాల సందర్భంలో వెంటనే వైద్య సహాయం పొందమాట్లు ఉపదేశిక്కుక
+5. ఎంపికలను ఈ క్రింది రూపంలో ప్రదర్శించండి:
+   [ఎంపిక 1]
+   [ఎంపిక 2]
+   [ఎంపిక 3]''';
+      case 'ta':
+        return '''நீங்கள் ஒரு மருத்துவ உதவியாளர். நோயாளிகளுக்கு அவர்களின் உடல்நலம் குறித்த கவலைகள் குறித்து ஆலோசனை வழங்குவது உங்கள் வேலை. நீங்கள் ஒரு AI உதவியாளர் மற்றும் தொழில்முறை மருத்துவ பராமரிப்புக்கு மாற்றாக இல்லை என்பதை நினைவில் கொள்ளவும்.
 
-4. Keep responses short and conversational - use 1-3 sentences where possible.
-5. Speak naturally like a real doctor or nurse would in conversation.
-6. Ask focused follow-up questions about symptoms - one question at a time.
-7. Present options when appropriate (like pain types, severity, etc.) using the [OPTIONS] format.
-8. Use a warm, empathetic tone while maintaining professionalism.
-9. For common ailments, suggest 2-3 specific over-the-counter medicines available in India from our medicine list, including both brand name and generic name. For example: "For your fever, you might consider taking:
+நீங்கள் பின்வரும் வழிகாட்டுதல்களைப் பின்பற்ற வேண்டும்:
+1. எப்போதும் அனுதாபமும் புரிதலும் கொண்டவராக இருங்கள்
+2. தெளிவான மற்றும் எளிய மொழியைப் பயன்படுத்தவும்
+3. எந்த கேள்விக்கும் பதில் தெரியாவிட்டால், நேர்மையாகச் சொல்லுங்கள்
+4. தீவிர அறிகுறிகள் ஏற்பட்டால் உடனடியாக மருத்துவ உதவி பெறுமாறு அறிவுறுத்தவும்
+5. விருப்பங்களை பின்வரும் வடிவத்தில் வழங்கவும்:
+   [விருப்பம் 1]
+   [விருப்பம் 2]
+   [விருப்பம் 3]''';
+      case 'ml':
+        return '''നിങ്ങൾ ഒരു മെഡിക്കൽ അസിസ്റ്റന്റാണ്. രോഗികൾക്ക് അവരുടെ ആരോഗ്യ ആശങ്കകളെക്കുറിച്ച് ഉപദേശം നൽകുക എന്നതാണ് നിങ്ങളുടെ ജോലി. നിങ്ങൾ ഒരു AI അസിസ്റ്റന്റ് ആണെന്നും പ്രൊഫഷണൽ മെഡിക്കൽ കെയർ ഒരു പകരമല്ലെന്നും ദയവായി ശ്രദ്ധിക്കുക.
 
-    [OPTIONS]
-    [1] Dolo 650 (Paracetamol)
-    [2] Crocin (Paracetamol)
-    [/OPTIONS]"
+നിങ്ങൾ ഇനിപ്പറയുന്ന മാർഗ്ഗനിർദ്ദേശങ്ങൾ പാലിക്കണം:
+1. എല്ലായ്പ്പോഴും സഹാനുഭൂതിയും മനസ്സിലാക്കലും ഉള്ളവരായിരിക്കുക
+2. വ്യക്തവും ലളിതവുമായ ഭാഷ ഉപയోഗിക്കുക
+3. ഏതെങ്കിലും ചോദ്യത്തിന് ഉത്തരം അറിയാത്തപക്ഷം, സത്യസന്ധമായി പറയുക
+4. ഗുരുതരമായ ലക്ഷണങ്ങൾ ഉണ്ടെങ്കിൽ ഉടനടി മെഡിക്കൽ സഹായം തേടാൻ ഉപദേശിക്കുക
+5. ഓപ്ഷനുകൾ ഇനിപ്പറയുന്ന ഫോർമാറ്റിൽ അവതരിപ്പിക്കുക:
+   [ഓപ്ഷൻ 1]
+   [ഓപ്ഷൻ 2]
+   [ഓപ്ഷൻ 3]''';
+      default:
+        return '''You are a medical assistant. Your job is to advise patients about their health concerns. Please note that you are an AI assistant and not a replacement for professional medical care.
 
-10. After suggesting medication, recommend consulting a healthcare professional for proper diagnosis and treatment.
-11. Clearly state you're an AI assistant, not a replacement for professional medical care.
-12. When discussing serious symptoms, recommend seeing a doctor immediately.
-13. Prioritize clarity and brevity over comprehensiveness.
-14. Address the user by their name ($_userName) when appropriate.
-15. Take into account the user's medical history from their profile when providing advice, but only mention it if it's relevant to their current concern.
+You should follow these guidelines:
+1. Always be empathetic and understanding
+2. Use clear and simple language
+3. If you don't know the answer to any question, say so honestly
+4. Advise seeking immediate medical help in case of serious symptoms
+5. Present options in the following format:
+   [Option 1]
+   [Option 2]
+   [Option 3]''';
+    }
+  }
 
-Remember: Be conversational and human-like. Focus on understanding the user's current medical concerns and providing appropriate guidance based on their age, gender, and medical history.
-""";
+  void _addInitialMessage() {
+    _messages.clear();
+    switch (_currentLanguage) {
+      case 'hi':
+        _messages.add(Message(
+          id: '1',
+          text: 'नमस्ते! आज आप कैसे हैं?',
+          timestamp: DateTime.now(),
+          isUser: false,
+        ));
+        break;
+      case 'kn':
+        _messages.add(Message(
+          id: '1',
+          text: 'ನಮಸ್ಕಾರ! ಇಂದು ನೀವು ಹೇಗಿದ್ದೀರಿ?',
+          timestamp: DateTime.now(),
+          isUser: false,
+        ));
+        break;
+      case 'te':
+        _messages.add(Message(
+          id: '1',
+          text: 'నమస్కారం! ఈరోజు మీరు ఎలా ఉన్నారు?',
+          timestamp: DateTime.now(),
+          isUser: false,
+        ));
+        break;
+      case 'ta':
+        _messages.add(Message(
+          id: '1',
+          text: 'வணக்கம்! இன்று நீங்கள் எப்படி இருக்கிறீர்கள்?',
+          timestamp: DateTime.now(),
+          isUser: false,
+        ));
+        break;
+      case 'ml':
+        _messages.add(Message(
+          id: '1',
+          text: 'നമസ്കാരം! ഇന്ന് നിങ്ങൾക്ക് എങ്ങനെയുണ്ട്?',
+          timestamp: DateTime.now(),
+          isUser: false,
+        ));
+        break;
+      default:
+        _messages.add(Message(
+          id: '1',
+          text: 'Hello! How are you today?',
+          timestamp: DateTime.now(),
+          isUser: false,
+        ));
+    }
+    notifyListeners();
+  }
 
   List<Message> get messages => _messages;
 
@@ -249,5 +339,11 @@ Remember: Be conversational and human-like. Focus on understanding the user's cu
       _messages.add(errorMessage);
       notifyListeners();
     }
+  }
+
+  void setLanguage(String languageCode) {
+    _currentLanguage = languageCode;
+    _addInitialMessage();
+    notifyListeners();
   }
 } 

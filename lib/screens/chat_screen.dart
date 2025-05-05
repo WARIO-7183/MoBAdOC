@@ -60,6 +60,16 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   late final SupabaseService _supabaseService;
   Map<String, dynamic>? _userProfile;
+  String _selectedLanguage = 'English';
+
+  final Map<String, String> _languages = {
+    'English': 'en',
+    'Hindi': 'hi',
+    'Kannada': 'kn',
+    'Telugu': 'te',
+    'Tamil': 'ta',
+    'Malayalam': 'ml',
+  };
 
   @override
   void initState() {
@@ -129,6 +139,48 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  void _showLanguageDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Language', style: kHeaderStyle),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: _languages.keys.map((language) {
+              return RadioListTile<String>(
+                title: Text(language),
+                value: language,
+                groupValue: _selectedLanguage,
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedLanguage = value;
+                    });
+                    context.read<ChatProvider>().setLanguage(_languages[value]!);
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Language changed to $value'),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                },
+              );
+            }).toList(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
@@ -186,6 +238,10 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.language, color: Colors.black),
+            onPressed: _showLanguageDialog,
+          ),
           IconButton(
             icon: const Icon(Icons.person_outline, color: Colors.black),
             onPressed: _showProfileDialog,
