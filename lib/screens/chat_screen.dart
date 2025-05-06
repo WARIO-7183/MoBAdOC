@@ -9,6 +9,8 @@ import 'dart:io';
 import '../models/message.dart';
 import '../providers/chat_provider.dart';
 import '../services/supabase_service.dart';
+import '../services/translation_service.dart';
+import 'edit_profile_screen.dart'; // Import the new edit profile screen
 import 'dart:convert';
 
 // Add TextStyle constants for consistent font usage
@@ -24,6 +26,94 @@ const kMessageStyle = TextStyle(
   fontSize: 16,
   color: Colors.black87,
 );
+
+// Create a map of text styles for different languages
+Map<String, TextStyle> getLanguageTextStyle(String languageCode) {
+  // Default style for Latin scripts
+  TextStyle defaultStyle = const TextStyle(
+    fontFamily: 'Nunito',
+    fontSize: 16,
+    color: Colors.black87,
+  );
+  
+  // Special styles for non-Latin scripts
+  switch (languageCode) {
+    case 'hi': // Hindi
+      return {
+        'message': TextStyle(
+          fontFamily: 'Noto Sans Devanagari',
+          fontSize: 16, 
+          color: Colors.black87,
+        ),
+        'button': TextStyle(
+          fontFamily: 'Noto Sans Devanagari',
+          fontSize: 14,
+          color: Colors.blue[900],
+        ),
+      };
+    case 'ta': // Tamil
+      return {
+        'message': TextStyle(
+          fontFamily: 'Noto Sans Tamil',
+          fontSize: 16, 
+          color: Colors.black87,
+        ),
+        'button': TextStyle(
+          fontFamily: 'Noto Sans Tamil',
+          fontSize: 14,
+          color: Colors.blue[900],
+        ),
+      };
+    case 'te': // Telugu
+      return {
+        'message': TextStyle(
+          fontFamily: 'Noto Sans Telugu',
+          fontSize: 16, 
+          color: Colors.black87,
+        ),
+        'button': TextStyle(
+          fontFamily: 'Noto Sans Telugu',
+          fontSize: 14,
+          color: Colors.blue[900],
+        ),
+      };
+    case 'kn': // Kannada
+      return {
+        'message': TextStyle(
+          fontFamily: 'Noto Sans Kannada',
+          fontSize: 16, 
+          color: Colors.black87,
+        ),
+        'button': TextStyle(
+          fontFamily: 'Noto Sans Kannada',
+          fontSize: 14,
+          color: Colors.blue[900],
+        ),
+      };
+    case 'ml': // Malayalam
+      return {
+        'message': TextStyle(
+          fontFamily: 'Noto Sans Malayalam',
+          fontSize: 16, 
+          color: Colors.black87,
+        ),
+        'button': TextStyle(
+          fontFamily: 'Noto Sans Malayalam',
+          fontSize: 14,
+          color: Colors.blue[900],
+        ),
+      };
+    default: // English or any other language
+      return {
+        'message': defaultStyle,
+        'button': TextStyle(
+          fontFamily: 'Nunito',
+          fontSize: 14,
+          color: Colors.blue[900],
+        ),
+      };
+  }
+}
 
 const kHintStyle = TextStyle(
   fontFamily: 'Nunito',
@@ -62,20 +152,17 @@ class _ChatScreenState extends State<ChatScreen> {
   Map<String, dynamic>? _userProfile;
   String _selectedLanguage = 'English';
 
-  final Map<String, String> _languages = {
-    'English': 'en',
-    'Hindi': 'hi',
-    'Kannada': 'kn',
-    'Telugu': 'te',
-    'Tamil': 'ta',
-    'Malayalam': 'ml',
-  };
-
   @override
   void initState() {
     super.initState();
     _supabaseService = SupabaseService(Supabase.instance.client);
     _loadUserProfile();
+    
+    // Initialize with the current language from ChatProvider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final currentLangCode = context.read<ChatProvider>().getCurrentLanguage();
+      _selectedLanguage = TranslationService.getLanguageName(currentLangCode);
+    });
   }
 
   Future<void> _loadUserProfile() async {
@@ -134,49 +221,174 @@ class _ChatScreenState extends State<ChatScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Close'),
           ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00A884),
+            ),
+            onPressed: () async {
+              Navigator.pop(context);
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditProfileScreen(
+                    phoneNumber: widget.phoneNumber,
+                    userProfile: _userProfile!,
+                  ),
+                ),
+              );
+              
+              if (result == true) {
+                _loadUserProfile(); // Reload the user profile after editing
+              }
+            },
+            child: const Text('Edit Profile'),
+          ),
         ],
       ),
     );
   }
 
-  void _showLanguageDialog() {
+  void _showLanguageSelector() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Select Language', style: kHeaderStyle),
+        title: const Text('Select Language'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: _languages.keys.map((language) {
-              return RadioListTile<String>(
-                title: Text(language),
-                value: language,
-                groupValue: _selectedLanguage,
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _selectedLanguage = value;
-                    });
-                    context.read<ChatProvider>().setLanguage(_languages[value]!);
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Language changed to $value'),
-                        duration: const Duration(seconds: 2),
+            children: TranslationService.getAvailableLanguages().map((language) {
+              final languageCode = TranslationService.getLanguageCode(language);
+              final isSelected = _selectedLanguage == language;
+              final nativeName = TranslationService.getNativeLanguageName(languageCode);
+              
+              // Get the appropriate font family for the language
+              TextStyle nativeTextStyle;
+              switch (languageCode) {
+                case 'hi':
+                  nativeTextStyle = const TextStyle(
+                    fontFamily: 'Noto Sans Devanagari',
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  );
+                  break;
+                case 'ta':
+                  nativeTextStyle = const TextStyle(
+                    fontFamily: 'Noto Sans Tamil',
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  );
+                  break;
+                case 'te':
+                  nativeTextStyle = const TextStyle(
+                    fontFamily: 'Noto Sans Telugu',
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  );
+                  break;
+                case 'kn':
+                  nativeTextStyle = const TextStyle(
+                    fontFamily: 'Noto Sans Kannada',
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  );
+                  break;
+                case 'ml':
+                  nativeTextStyle = const TextStyle(
+                    fontFamily: 'Noto Sans Malayalam',
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  );
+                  break;
+                default:
+                  nativeTextStyle = const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  );
+              }
+              
+              return ListTile(
+                title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      language,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
-                    );
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      nativeName,
+                      style: nativeTextStyle,
+                    ),
+                  ],
+                ),
+                trailing: isSelected ? const Icon(Icons.check, color: Colors.green) : null,
+                onTap: () async {
+                  if (_selectedLanguage == language) {
+                    Navigator.pop(context);
+                    return;
+                  }
+                
+                  // Show loading indicator while translation happens
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (BuildContext context) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    },
+                  );
+                  
+                  try {
+                    setState(() {
+                      _selectedLanguage = language;
+                    });
+                    
+                    // Update the language in the chat provider
+                    final chatProvider = context.read<ChatProvider>();
+                    await chatProvider.setLanguage(languageCode);
+                    
+                    // Close loading dialog
+                    if (context.mounted) Navigator.pop(context);
+                    
+                    // Close language selector
+                    if (context.mounted) Navigator.pop(context);
+                    
+                    // Show a confirmation message
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Language changed to $nativeName'),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    // Close loading dialog
+                    if (context.mounted) Navigator.pop(context);
+                    
+                    // Close language selector
+                    if (context.mounted) Navigator.pop(context);
+                    
+                    // Show error message
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Failed to change language: $e'),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
                   }
                 },
               );
             }).toList(),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
       ),
     );
   }
@@ -240,7 +452,8 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.language, color: Colors.black),
-            onPressed: _showLanguageDialog,
+            tooltip: 'Select Language',
+            onPressed: _showLanguageSelector,
           ),
           IconButton(
             icon: const Icon(Icons.save, color: Colors.black),
@@ -254,47 +467,12 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.person_outline, color: Colors.black),
+            tooltip: 'View Profile',
             onPressed: _showProfileDialog,
           ),
           IconButton(
             icon: const Icon(Icons.add, color: Colors.black),
             onPressed: () => _createNewChat(context),
-          ),
-          IconButton(
-            icon: const Icon(Icons.description, color: Colors.black),
-            tooltip: 'Generate Report',
-            onPressed: () async {
-              final filePath = await context.read<ChatProvider>().generateAndSaveReport(widget.phoneNumber);
-              if (filePath != null) {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Report Generated'),
-                    content: Text('PDF saved at:\n$filePath'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('OK'),
-                      ),
-                    ],
-                  ),
-                );
-              } else {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Error'),
-                    content: const Text('Failed to generate report.'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('OK'),
-                      ),
-                    ],
-                  ),
-                );
-              }
-            },
           ),
         ],
       ),
@@ -339,7 +517,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     itemCount: chatProvider.messages.length,
                     itemBuilder: (context, index) {
                       final message = chatProvider.messages[index];
-                      return _MessageBubble(message: message);
+                      return _buildMessage(message);
                     },
                   );
                 },
@@ -359,6 +537,121 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildMessage(Message message) {
+    // Helper to parse options from message text
+    List<String> extractOptions(String text) {
+      final optionsMatch = RegExp(r'\[OPTIONS\](.*?)\[/OPTIONS\]', dotAll: true).firstMatch(text);
+      if (optionsMatch == null) return [];
+      
+      final optionsText = optionsMatch.group(1);
+      return RegExp(r'\[(\d+)\]\s*(.*?)(?=\n|$)')
+          .allMatches(optionsText!)
+          .map((match) => match.group(2)!)
+          .toList();
+    }
+    
+    // Helper to get message without options
+    String getMessageWithoutOptions(String text) {
+      return text.replaceAll(RegExp(r'\[OPTIONS\].*?\[/OPTIONS\]', dotAll: true), '').trim();
+    }
+    
+    // Use either translated text or original text
+    final displayText = message.displayText;
+    final messageText = getMessageWithoutOptions(displayText);
+    final options = message.options ?? extractOptions(displayText);
+    
+    // Get the current language code from provider
+    final currentLangCode = context.read<ChatProvider>().getCurrentLanguage();
+    
+    // Get appropriate text styles for the current language
+    final textStyles = getLanguageTextStyle(currentLangCode);
+    final messageStyle = textStyles['message'] ?? kMessageStyle;
+    final buttonStyle = textStyles['button'] ?? TextStyle(
+      fontSize: 14,
+      color: Colors.blue[900],
+    );
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      child: Row(
+        mainAxisAlignment: message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          if (!message.isUser) ...[
+            const CircleAvatar(
+              backgroundColor: Colors.blue,
+              child: Icon(Icons.medical_services, color: Colors.white),
+            ),
+            const SizedBox(width: 8.0),
+          ],
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.all(12.0),
+              decoration: BoxDecoration(
+                color: message.isUser ? Colors.blue[100] : Colors.white,
+                borderRadius: BorderRadius.circular(12.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4.0,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    messageText,
+                    style: messageStyle,
+                  ),
+                  if (options.isNotEmpty) ...[
+                    const SizedBox(height: 8.0),
+                    const Divider(color: Colors.grey),
+                    const SizedBox(height: 8.0),
+                    Wrap(
+                      spacing: 8.0,
+                      runSpacing: 8.0,
+                      children: options.map((option) {
+                        return ElevatedButton(
+                          onPressed: () {
+                            context.read<ChatProvider>().sendMessage(option);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue[50],
+                            foregroundColor: Colors.blue[900],
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 8.0,
+                            ),
+                          ),
+                          child: Text(
+                            option,
+                            style: buttonStyle,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          if (message.isUser) ...[
+            const SizedBox(width: 8.0),
+            const CircleAvatar(
+              backgroundColor: Colors.green,
+              child: Icon(Icons.person, color: Colors.white),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _handleOptionSelected(String option) {
+    context.read<ChatProvider>().sendMessage(option);
   }
 }
 
@@ -535,7 +828,7 @@ class _MessageBubbleState extends State<_MessageBubble> {
             ),
             decoration: BoxDecoration(
               color: widget.message.isUser
-                  ? const Color.fromARGB(255, 76, 203, 104)
+                  ? const Color.fromARGB(255, 0, 168, 132)
                   : Colors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
@@ -550,14 +843,16 @@ class _MessageBubbleState extends State<_MessageBubble> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Display message text without options
                 Text(
-                  widget.message.text,
+                  _getMessageWithoutOptions(widget.message.text),
                   style: TextStyle(
                     color: widget.message.isUser ? Colors.white : Colors.black87,
                     fontSize: 16,
                   ),
                 ),
-                if (widget.message.options != null && widget.message.options!.isNotEmpty)
+                // Display options as buttons
+                if (_hasOptions(widget.message.text))
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Column(
@@ -565,7 +860,7 @@ class _MessageBubbleState extends State<_MessageBubble> {
                       children: [
                         const Divider(color: Colors.grey),
                         const SizedBox(height: 8),
-                        ...widget.message.options!.map((option) => Padding(
+                        ..._getOptions(widget.message.text).map((option) => Padding(
                           padding: const EdgeInsets.only(bottom: 8.0),
                           child: ElevatedButton(
                             onPressed: () {
@@ -643,6 +938,27 @@ class _MessageBubbleState extends State<_MessageBubble> {
       ),
     );
   }
+
+  bool _hasOptions(String message) {
+    return message.contains('[OPTIONS]') && message.contains('[/OPTIONS]');
+  }
+
+  List<String> _getOptions(String message) {
+    final optionsMatch = RegExp(r'\[OPTIONS\](.*?)\[/OPTIONS\]', dotAll: true).firstMatch(message);
+    if (optionsMatch == null) return [];
+    
+    final optionsText = optionsMatch.group(1);
+    final options = RegExp(r'\[(\d+)\]\s*(.*?)(?=\n|$)')
+        .allMatches(optionsText!)
+        .map((match) => match.group(2)!)
+        .toList();
+    
+    return options;
+  }
+
+  String _getMessageWithoutOptions(String message) {
+    return message.replaceAll(RegExp(r'\[OPTIONS\].*?\[/OPTIONS\]', dotAll: true), '').trim();
+  }
 }
 
 class _MessageInput extends StatefulWidget {
@@ -678,9 +994,9 @@ class _MessageInputState extends State<_MessageInput> {
 
   void _initTts() async {
     await _flutterTts.setLanguage("en-US");
-    await _flutterTts.setSpeechRate(0.5);
+    await _flutterTts.setSpeechRate(1.0);
     await _flutterTts.setVolume(1.0);
-    await _flutterTts.setPitch(1.0);
+    await _flutterTts.setPitch(1.5);
     
     _flutterTts.setCompletionHandler(() {
       setState(() {

@@ -4,7 +4,7 @@ class Message {
   final DateTime timestamp;
   final bool isUser;
   final String? imageUrl;
-  final List<String>? options;
+  List<String>? options;
 
   Message({
     required this.id,
@@ -36,4 +36,6 @@ class Message {
       'options': options,
     };
   }
+
+  String get displayText => text;
 } 

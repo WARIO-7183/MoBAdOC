@@ -17,12 +17,17 @@ dependencies:
   flutter_dotenv: ^5.1.0
   flutter_tts: ^3.8.5
   image_picker: ^1.0.7
-  permission_handler: ^11.3.0
+  permission_handler: ^11.0.1
   # Supabase packages
   supabase_flutter: ^2.3.4
   supabase: ^2.3.4
   pdf: ^3.10.4
   path_provider: ^2.1.2
+  flutter_localizations:
+    sdk: flutter
+  google_fonts: ^6.1.0
+  flutter_sound: ^9.2.13
+  just_audio: ^0.9.34
 
 dev_dependencies:
   flutter_test:

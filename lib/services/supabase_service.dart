@@ -1,5 +1,6 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 
 class SupabaseService {
   static final SupabaseClient client = SupabaseClient(
@@ -71,6 +72,7 @@ class SupabaseService {
     String? additionalHealthInfo,
   }) async {
     try {
+      debugPrint('Starting profile update in SupabaseService');
       final Map<String, dynamic> updateData = {};
       if (name != null) updateData['name'] = name;
       if (age != null) updateData['age'] = age;
@@ -91,11 +93,17 @@ class SupabaseService {
         updateData['Medical_history'] = medicalHistory;
       }
 
-      await _supabaseClient
+      debugPrint('Update data: $updateData');
+      debugPrint('Updating profile for phone number: $phoneNumber');
+
+      final response = await _supabaseClient
           .from('user_profiles')
           .update(updateData)
           .eq('phone_number', phoneNumber);
+      
+      debugPrint('Supabase update response: $response');
     } catch (e) {
+      debugPrint('Error in updateUserProfile: $e');
       throw Exception('Failed to update user profile: $e');
     }
   }
