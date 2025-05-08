@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'profile_setup_screen.dart';
 import 'home_screen.dart';
 import '../services/supabase_service.dart';
+import 'chat_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -38,11 +39,11 @@ class _LoginScreenState extends State<LoginScreen> {
         final userProfile = await _supabaseService.getUserProfile(phoneNumber);
         
         if (userProfile != null) {
-          // User exists, navigate directly to home screen
+          // User exists, navigate directly to chat screen
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => HomeScreen(
+              builder: (context) => ChatScreen(
                 phoneNumber: phoneNumber,
               ),
             ),

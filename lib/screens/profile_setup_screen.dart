@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
 import 'home_screen.dart';
+import 'chat_screen.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   final String phoneNumber;
@@ -116,11 +117,11 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           );
         }
 
-        // Navigate to home screen
+        // Navigate to chat screen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => HomeScreen(
+            builder: (context) => ChatScreen(
               phoneNumber: widget.phoneNumber,
             ),
           ),
