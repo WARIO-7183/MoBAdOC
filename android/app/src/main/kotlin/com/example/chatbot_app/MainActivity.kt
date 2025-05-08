@@ -1,5 +1,75 @@
 package com.example.chatbot_app
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.os.Build
+import androidx.core.app.NotificationCompat
 import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
 
-class MainActivity : FlutterActivity()
+class MainActivity: FlutterActivity() {
+    private val CHANNEL = "com.aidocapp/notifications"
+    private val NOTIFICATION_CHANNEL_ID = "chatbot_notifications"
+    private val NOTIFICATION_CHANNEL_NAME = "Chatbot Messages"
+
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "initialize" -> {
+                    createNotificationChannel()
+                    result.success(null)
+                }
+                "showNotification" -> {
+                    val title = call.argument<String>("title")
+                    val body = call.argument<String>("body")
+                    val payload = call.argument<String>("payload")
+                    
+                    if (title != null && body != null) {
+                        showNotification(title, body, payload)
+                        result.success(null)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "Title and body are required", null)
+                    }
+                }
+                else -> {
+                    result.notImplemented()
+                }
+            }
+        }
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                NOTIFICATION_CHANNEL_ID,
+                NOTIFICATION_CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifications for chatbot messages"
+                enableLights(true)
+                enableVibration(true)
+            }
+
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+    private fun showNotification(title: String, body: String, payload: String?) {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        
+        val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .build()
+
+        notificationManager.notify(System.currentTimeMillis().toInt(), notification)
+    }
+}

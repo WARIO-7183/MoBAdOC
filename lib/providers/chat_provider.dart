@@ -5,6 +5,7 @@ import '../models/message.dart';
 import '../services/chat_service.dart';
 import '../services/supabase_service.dart';
 import '../services/translation_service.dart';
+import '../services/notification_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -24,6 +25,11 @@ class ChatProvider with ChangeNotifier {
         _supabaseService = SupabaseService(Supabase.instance.client) {
     _loadUserProfile();
     _addInitialMessage();
+    _initializeNotifications();
+  }
+
+  Future<void> _initializeNotifications() async {
+    await NotificationService.initialize();
   }
 
   Future<void> setLanguage(String languageCode) async {
@@ -188,6 +194,13 @@ The options should be:
       
       _messages.add(botMessage);
       notifyListeners();
+
+      // Show notification for the bot's response
+      await NotificationService.showNotification(
+        title: 'Medical Assistant',
+        body: messageWithoutOptions,
+        payload: botResponse.id,
+      );
     } catch (e) {
       print('Error sending message: $e');
       // Handle error by showing error message
