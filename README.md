@@ -9,18 +9,29 @@ A modern, AI-powered Flutter chat app for medical guidance, multilingual support
 
 ## ✨ Features
 
-- **Conversational AI Medical Assistant** (powered by OpenAI GPT-4)
-- 🌐 **Multilingual Chat**: Interact in English, Hindi, Kannada, Telugu, Tamil, or Malayalam
-- 🧑‍⚕️ **Personalized Profile**: Name, age, gender, and detailed medical history
-- 🗂️ **Profile Viewer**: View your profile details anytime from the chat screen
-- 💬 **Selectable Options**: Tap on suggested options instead of typing
-- 🗣️ **Voice Input**: Speak your questions or responses
-- 🖼️ **Upload & Analyze Medical Images/Reports**
-- 👍👎 **Like/Dislike Feedback** for responses
-- 📋 **Copy Message** functionality
-- ➕ **Start New Consultations** easily
-- 💾 **Save Chat Record**: Store your entire conversation in the database
-- 📝 **Generate PDF Report**: Create a consolidated medical report (profile + chat) as a PDF using OpenAI
+- **AI-Powered Medical Assistant** (powered by OpenAI GPT-4)
+- 🌐 **Multilingual Support**: Native support for English, Hindi, Kannada, Telugu, Tamil, and Malayalam
+- 👤 **User Authentication**: Secure login and profile management
+- 🧑‍⚕️ **Comprehensive Profile Management**:
+  - Create and edit detailed medical profiles
+  - Store medical history and personal information
+  - View and update profile information anytime
+- 💬 **Intelligent Chat Interface**:
+  - Natural language medical consultations
+  - Voice input support
+  - Suggested response options
+  - Message feedback system (like/dislike)
+  - Copy message functionality
+- 📱 **Modern UI/UX**:
+  - Clean, intuitive interface
+  - Responsive design
+  - Native font support for all supported languages
+  - Dark/light theme support
+- 🔒 **Secure Data Management**:
+  - Supabase backend integration
+  - Secure user authentication
+  - Encrypted data storage
+  - Environment variable configuration
 
 ---
 
@@ -55,30 +66,30 @@ flutter pub get
 
 ## 🏥 How It Works
 
-1. **Onboarding:**
-   - Set up your profile (name, age, gender, medical history)
-   - Existing users skip profile setup and go straight to the home screen
+1. **Authentication:**
+   - Secure login system
+   - New user registration
+   - Profile setup for first-time users
 
-2. **Chatting:**
-   - Select your preferred language (English, Hindi, Kannada, Telugu, Tamil, Malayalam)
-   - Ask health questions, describe symptoms, or upload medical images
-   - Receive clear, empathetic, and professional responses
-   - Tap on suggested options for quick replies
+2. **Profile Management:**
+   - Create detailed medical profile
+   - Update personal and medical information
+   - View profile details anytime
 
-3. **Features:**
-   - View your profile anytime from the chat screen
-   - Save your chat record to the database with one tap
-   - Generate a consolidated PDF report (profile + chat) for sharing or personal records
-   - Like/dislike and copy responses
-   - Voice input for hands-free chatting
-   - Start new consultations anytime
+3. **Chat Interface:**
+   - Select preferred language
+   - Natural conversation with AI assistant
+   - Voice input support
+   - Quick response options
+   - Message feedback system
 
 ---
 
 ## 🔒 Security & Privacy
-- All medical data is processed securely
-- Images are converted to base64 for secure transmission
-- Chat records and reports are stored securely in Supabase
+- Secure user authentication through Supabase
+- Encrypted data transmission
+- Secure storage of medical information
+- Environment variable protection
 - **Not a replacement for professional medical care**
 
 ---
@@ -87,18 +98,17 @@ flutter pub get
 
 **Key Dependencies:**
 - `provider` – State management
-- `supabase_flutter` – User profile & backend
-- `http` – API communication
+- `supabase_flutter` – Authentication and backend
 - `flutter_dotenv` – Environment configuration
-- `image_picker`, `file_picker` – Image/file handling
-- `pdf`, `path_provider` – PDF report generation and storage
+- `google_fonts` – Multilingual font support
 - `flutter_tts` – Text-to-speech
 - `permission_handler` – Permissions
 
 **Architecture:**
 - Provider pattern for state management
-- Clean separation of UI and business logic
-- Modular, maintainable codebase
+- Clean architecture with separation of concerns
+- Modular and maintainable codebase
+- Multilingual support with native fonts
 
 ---
 
