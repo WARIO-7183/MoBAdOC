@@ -12,6 +12,7 @@ import '../services/supabase_service.dart';
 import '../services/translation_service.dart';
 import 'edit_profile_screen.dart'; // Import the new edit profile screen
 import 'dart:convert';
+import 'ai_call_screen.dart';
 
 // Add TextStyle constants for consistent font usage
 const kTitleStyle = TextStyle(
@@ -450,6 +451,18 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.call, color: Colors.black),
+            tooltip: 'Call AI',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AICallScreen(phoneNumber: widget.phoneNumber),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.language, color: Colors.black),
             tooltip: 'Select Language',
