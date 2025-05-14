@@ -92,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
-                    'Welcome to HiDoc',
+                    'Welcome to HI Health',
                     style: TextStyle(
                       fontSize: 36,
                       fontFamily: 'Pacifico',

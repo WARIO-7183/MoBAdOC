@@ -12,110 +12,242 @@ app = Flask(__name__)
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
 HTML_PAGE = """<!DOCTYPE html>
-<html lang="en">
+<html lang=\"en\">
 <head>
-  <meta charset="UTF-8">
-  <title>WhatsApp Call — AIDOC</title>
-  <style>
-    /* full‐screen bg */
-    body, html {
-      margin: 0; padding: 0;
-      width: 100%; height: 100%;
-      background: #000 url('https://i.imgur.com/3ZRjF5T.png') center/cover no-repeat;
-      font-family: 'Segoe UI', sans-serif;
-      color: #fff;
-      display: flex; align-items: center; justify-content: center;
-    }
-    /* call container */
-    .call-container {
-      position: relative;
-      width: 360px; height: 780px;
-      background: rgba(0,0,0,0.6);
-      border-radius: 40px;
-      overflow: hidden;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.7);
-    }
-    /* top status bar */
-    .status-bar {
-      height: 44px; padding: 0 12px;
-      display: flex; align-items: center; justify-content: space-between;
-      font-size: 14px;
-    }
-    .status-left { display: flex; align-items: center; gap: 6px; }
-    .signal, .wifi, .battery {
-      width: 18px; height: 12px;
-      background: rgba(255,255,255,0.8);
-      border-radius: 2px;
-    }
-    .time { font-weight: 500; }
-    /* contact info */
-    .contact-info {
-      margin-top: 8px;
-      text-align: center;
-    }
-    .contact-name { font-size: 22px; font-weight: 600; }
-    .encrypted { font-size: 12px; color: rgba(255,255,255,0.7); }
-    /* avatar circle */
-    .avatar {
-      width: 220px; height: 220px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 50%;
-      margin: 24px auto 40px;
-    }
-    /* controls */
-    .controls {
-      position: absolute; bottom: 32px; left: 0; right: 0;
-      display: flex; justify-content: space-around;
-      padding: 0 24px;
-    }
-    .btn {
-      width: 60px; height: 60px;
-      background: rgba(255,255,255,0.15);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 26px; cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn:hover { background: rgba(255,255,255,0.25); }
-    .btn.end {
-      background: #E74C3C;
-    }
-    .btn.end:hover { background: #C0392B; }
-  </style>
+    <meta charset=\"UTF-8\">
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+    <title>HI Health</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: #181C23;
+            color: #fff;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 340px;
+            height: 700px;
+            background: #232733;
+            border-radius: 32px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .top-bar {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 18px;
+        }
+        .back-arrow {
+            font-size: 22px;
+            color: #fff;
+            cursor: pointer;
+        }
+        .signal {
+            width: 32px;
+            height: 8px;
+            border-radius: 4px;
+            background: #444;
+            margin-left: auto;
+        }
+        .mic-outer {
+            margin-top: 80px;
+            margin-bottom: 40px;
+            position: relative;
+            width: 220px;
+            height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .progress-ring {
+            position: absolute;
+            top: 0; left: 0;
+            width: 220px;
+            height: 220px;
+            z-index: 1;
+        }
+        .mic-btn {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #232733 60%, #2e3340 100%);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 24px #0008;
+            cursor: pointer;
+            z-index: 2;
+            transition: background 0.2s;
+        }
+        .mic-btn.recording {
+            background: linear-gradient(145deg, #1e90ff 60%, #00e0ff 100%);
+        }
+        .mic-btn svg {
+            width: 54px;
+            height: 54px;
+            fill: #fff;
+        }
+        .status {
+            margin: 24px 0 0 0;
+            color: #b0b6c3;
+            font-size: 18px;
+            text-align: center;
+            min-height: 28px;
+        }
+        .mic-btn-small {
+            margin-top: 60px;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: #232733;
+            border: 2px solid #1e90ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px #0006;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .mic-btn-small svg {
+            width: 32px;
+            height: 32px;
+            fill: #1e90ff;
+        }
+    </style>
 </head>
 <body>
-  <div class="call-container">
-    <div class="status-bar">
-      <div class="status-left">
-        <div class="signal"></div>
-        <div class="wifi"></div>
-      </div>
-      <div class="time">16:54</div>
-      <div class="battery"></div>
+    <div class=\"container\">
+        <div class=\"top-bar\">
+            <span class=\"back-arrow\">&#8592;</span>
+            <div class=\"signal\"></div>
+        </div>
+        <div class=\"mic-outer\">
+            <svg class=\"progress-ring\" width=\"220\" height=\"220\">
+                <circle r=\"100\" cx=\"110\" cy=\"110\" fill=\"none\" stroke=\"#22293a\" stroke-width=\"16\"/>
+                <circle id=\"progressArc\" r=\"100\" cx=\"110\" cy=\"110\" fill=\"none\" stroke=\"#1e90ff\" stroke-width=\"12\" stroke-linecap=\"round\" stroke-dasharray=\"628\" stroke-dashoffset=\"628\"/>
+            </svg>
+            <button class=\"mic-btn\" id=\"recordBtn\">
+                <svg viewBox=\"0 0 24 24\"><path d=\"M12 16a4 4 0 0 0 4-4V7a4 4 0 0 0-8 0v5a4 4 0 0 0 4 4zm5-4a1 1 0 1 1 2 0 6 6 0 0 1-6 6v2h3a1 1 0 1 1 0 2H7a1 1 0 1 1 0-2h3v-2a6 6 0 0 1-6-6 1 1 0 1 1 2 0 4 4 0 0 0 8 0z\"/></svg>
+            </button>
+        </div>
+        <div class=\"status\" id=\"status\">Tap the mic to start recording</div>
+        <button class=\"mic-btn-small\" id=\"recordBtnSmall\" style=\"display:none\">
+            <svg viewBox=\"0 0 24 24\"><path d=\"M12 16a4 4 0 0 0 4-4V7a4 4 0 0 0-8 0v5a4 4 0 0 0 4 4zm5-4a1 1 0 1 1 2 0 6 6 0 0 1-6 6v2h3a1 1 0 1 1 0 2H7a1 1 0 1 1 0-2h3v-2a6 6 0 0 1-6-6 1 1 0 1 1 2 0 4 4 0 0 0 8 0z\"/></svg>
+        </button>
     </div>
-
-    <div class="contact-info">
-      <div class="contact-name">AIDOC</div>
-      <div class="encrypted">End-to-end encrypted</div>
-    </div>
-
-    <div class="avatar"></div>
-
-    <div class="controls">
-      <div class="btn" title="Keypad">&#8942;</div>
-      <div class="btn" title="Video">&#128249;</div>
-      <div class="btn" title="Speaker">&#128266;</div>
-      <div class="btn" title="Mute">&#128263;</div>
-      <div class="btn end" id="endCallBtn" title="End call">&#128222;</div>
-    </div>
-  </div>
-
-  <script>
-    document.getElementById('endCallBtn').onclick = () => {
-      document.querySelector('.contact-name').textContent = 'Call ended';
-      document.querySelector('.encrypted').style.display = 'none';
-    };
-  </script>
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        const recordBtn = document.getElementById('recordBtn');
+        const recordBtnSmall = document.getElementById('recordBtnSmall');
+        const status = document.getElementById('status');
+        const progressArc = document.getElementById('progressArc');
+        let progressInterval;
+        let progress = 0;
+        function animateProgress(start, end, duration) {
+            let startTime = null;
+            function animate(time) {
+                if (!startTime) startTime = time;
+                const elapsed = time - startTime;
+                const percent = Math.min(elapsed / duration, 1);
+                const value = start + (end - start) * percent;
+                progressArc.setAttribute('stroke-dashoffset', 628 - 628 * value);
+                if (percent < 1) {
+                    requestAnimationFrame(animate);
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+        function startProgress() {
+            progress = 0;
+            progressArc.setAttribute('stroke-dashoffset', 628);
+            progressInterval = setInterval(() => {
+                progress += 0.01;
+                if (progress > 1) progress = 1;
+                progressArc.setAttribute('stroke-dashoffset', 628 - 628 * progress);
+            }, 50);
+        }
+        function stopProgress() {
+            clearInterval(progressInterval);
+            animateProgress(progress, 1, 400);
+        }
+        async function setupRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+                mediaRecorder.onstop = async () => {
+                    stopProgress();
+                    recordBtn.classList.remove('recording');
+                    recordBtnSmall.style.display = 'none';
+                    status.textContent = 'Processing...';
+                    try {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        const formData = new FormData();
+                        formData.append('audio', audioBlob);
+                        const response = await fetch('/talk', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        if (response.ok) {
+                            const audioResponse = await response.blob();
+                            const audioUrl = URL.createObjectURL(audioResponse);
+                            const audio = new Audio(audioUrl);
+                            audio.play();
+                            status.textContent = 'AI response playing...';
+                            audio.onended = () => {
+                                status.textContent = 'Tap the mic to start recording';
+                            };
+                        } else {
+                            throw new Error('Failed to process audio');
+                        }
+                    } catch (error) {
+                        status.textContent = 'Error: ' + error.message;
+                    }
+                    audioChunks = [];
+                };
+            } catch (error) {
+                status.textContent = 'Error accessing microphone: ' + error.message;
+            }
+        }
+        async function handleRecordClick() {
+            if (!mediaRecorder) {
+                await setupRecording();
+            }
+            if (mediaRecorder.state === 'inactive') {
+                // Start recording
+                audioChunks = [];
+                mediaRecorder.start();
+                recordBtn.classList.add('recording');
+                status.textContent = 'Recording... Tap again to stop';
+                startProgress();
+                recordBtnSmall.style.display = 'block';
+            } else {
+                // Stop recording
+                mediaRecorder.stop();
+                status.textContent = 'Processing your request...';
+            }
+        }
+        recordBtn.addEventListener('click', handleRecordClick);
+        recordBtnSmall.addEventListener('click', handleRecordClick);
+    </script>
 </body>
 </html>"""
     
@@ -150,7 +282,7 @@ def talk():
         chat = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "system", "content": "You are a helpful HI health assistant."},
                 {"role": "user", "content": user_text},
             ]
         )
@@ -159,7 +291,7 @@ def talk():
         # 3️⃣ TTS
         speech = client.audio.speech.create(
             model="tts-1",
-            voice="alloy",
+            voice="shimmer",
             input=reply_text
         )
 

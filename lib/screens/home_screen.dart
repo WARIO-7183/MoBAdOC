@@ -128,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             _buildOptionCard(
                               context,
-                              'Talk with AI DOCTOR',
+                              'Talk with HI Health',
                               Icons.medical_services,
                               () {
                                 // TODO: Implement doctor chat

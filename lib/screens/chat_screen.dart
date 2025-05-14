@@ -5,6 +5,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import '../models/message.dart';
 import '../providers/chat_provider.dart';
@@ -454,13 +455,18 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(
             icon: const Icon(Icons.call, color: Colors.black),
             tooltip: 'Call AI',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => AICallScreen(phoneNumber: widget.phoneNumber),
-                ),
-              );
+            onPressed: () async {
+              final Uri url = Uri.parse('http://127.0.0.1:5000');
+              if (!await launchUrl(url)) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Could not open the call interface'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              }
             },
           ),
           IconButton(
@@ -506,14 +512,14 @@ class _ChatScreenState extends State<ChatScreen> {
                   Icon(Icons.medical_services, size: 40, color: Colors.red),
                   SizedBox(height: 10),
                   Text(
-                    'AI Medical Assistant',
+                    'HI Health',
                     style: kHeaderStyle,
                   ),
                   SizedBox(height: 10),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 40),
                     child: Text(
-                      "I'm here to help you with your health concerns. Please note that I'm an AI assistant and not a replacement for professional medical care.",
+                      "I'm here to help you with your health concerns. Please note that I'm a HI health assistant and not a replacement for professional medical care.",
                       textAlign: TextAlign.center,
                       style: kSubtitleStyle,
                     ),
